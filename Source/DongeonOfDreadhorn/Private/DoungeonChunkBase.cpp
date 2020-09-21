@@ -2,6 +2,7 @@
 
 
 #include "DoungeonChunkBase.h"
+#include "DrawDebugHelpers.h"
 
 // Sets default values
 ADoungeonChunkBase::ADoungeonChunkBase()
@@ -15,6 +16,8 @@ void ADoungeonChunkBase::BeginPlay()
 	Super::BeginPlay();
 	
 	FindAndChachePossibleExits();
+	ChooseValidExit();
+	UE_LOG(LogTemp, Warning, TEXT("BeginPlay"));
 }
 
 void ADoungeonChunkBase::ChooseValidExit()
@@ -43,26 +46,37 @@ void ADoungeonChunkBase::ChooseValidExit()
 		{
 			UE_LOG(LogTemp, Warning, TEXT("Exit: %s is NOT blocked."), *Exit->GetReadableName());
 			//FilteredExits.Add(Exit);
+			if (!ValidExits.Contains(Exit))
+			{
+				ValidExits.Add(Exit);
+			}			
 		}
 		else
 		{
-			PossibleExits.Remove(Exit);
+			if (ValidExits.Contains(Exit))
+			{
+				ValidExits.Remove(Exit);
+			}
 			UE_LOG(LogTemp, Warning, TEXT("Exit: %s is blocked"), *Exit->GetReadableName());
 		}
 	}
 
-	if (PossibleExits.Num() > 0)
+	if (ValidExits.Num() > 0)
 	{
-		ValidExitIndex = FMath::RandRange(0, PossibleExits.Num() - 1);
+		ValidExitIndex = FMath::RandRange(0, ValidExits.Num() - 1);
 		UE_LOG(LogTemp, Warning, TEXT("ValidExitIndex: %d"), ValidExitIndex);
+	}
+	else
+	{
+		ValidExitIndex = -1;
 	}
 }
 
 bool ADoungeonChunkBase::TryGetValidExitSnapTransform(FTransform & OutTransform)
 {
 	ChooseValidExit();
-	if (!PossibleExits.IsValidIndex(ValidExitIndex)) { return false; }
-	OutTransform = PossibleExits[ValidExitIndex]->GetComponentTransform();
+	if (!ValidExits.IsValidIndex(ValidExitIndex)) { return false; }
+	OutTransform = ValidExits[ValidExitIndex]->GetComponentTransform();
 	return true;
 }
 
@@ -82,6 +96,53 @@ void ADoungeonChunkBase::FindAndChachePossibleExits()
 void ADoungeonChunkBase::GetPossibleExits(TArray<USceneComponent*>& OutPossibleExits)
 {
 	OutPossibleExits = PossibleExits;
+}
+
+void ADoungeonChunkBase::PlaceDeadEnds()
+{	
+	UE_LOG(LogTemp, Warning, TEXT("PacingDeadEnds for chunk: %s"), *GetHumanReadableName());
+	//ChooseValidExit();
+
+	TArray<USceneComponent*> DeadExits;
+	GetDeadExits(DeadExits);
+	FActorSpawnParameters SpawnParams;
+	for (auto Exit : DeadExits)
+	{	
+		FTransform  SpawnTansform = Exit->GetComponentTransform();
+		UE_LOG(LogTemp, Warning, TEXT("Successfully found place for DeadEnd: x=%f, y=%f, z=%f"), SpawnTansform.GetLocation().X, SpawnTansform.GetLocation().Y, SpawnTansform.GetLocation().Z);
+		GetWorld()->SpawnActor<ADoungeonChunkBase>(DeadEndChunkClass, SpawnTansform, SpawnParams);		
+	}
+}
+
+void ADoungeonChunkBase::GetDeadExits(TArray<USceneComponent*>& OutExits)
+{
+	for (auto Exit : PossibleExits)
+	{
+		float TraceLength = ((GetRootComponent()->GetComponentTransform().GetLocation() - Exit->GetComponentTransform().GetLocation()).Size2D() / 2) - 50;
+		FVector TraceStart = Exit->GetComponentTransform().GetLocation();		
+		FVector TraceEnd = Exit->GetComponentTransform().GetLocation() + ((Exit->GetForwardVector()* -1) * TraceLength);
+
+		ECollisionChannel TraceChannel = ECollisionChannel::ECC_WorldStatic;
+		FCollisionQueryParams QuerryParams;
+		FCollisionObjectQueryParams ObjectQuerryParams;
+		FHitResult HitResult;		
+		const bool bHit = GetWorld()->LineTraceSingleByObjectType(HitResult, TraceStart, TraceEnd, ObjectQuerryParams, QuerryParams);
+
+		if (!bHit)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Exit: %s is NOT blocked."), *Exit->GetReadableName());
+			OutExits.Add(Exit);
+		}
+		else
+		{
+			
+			UE_LOG(LogTemp, Warning, TEXT("Exit: %s is blocked by : %s"), *Exit->GetReadableName(), *HitResult.Actor->GetHumanReadableName());
+
+		}		
+	#if ENABLE_DRAW_DEBUG
+		DrawDebugLine(GetWorld(), TraceStart, TraceEnd, FColor::Blue, false, 55.0f, 0, 1);
+	#endif
+	}
 }
 
 

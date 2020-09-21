@@ -25,6 +25,12 @@ public:
 		TArray<USceneComponent*> PossibleExits;
 
 	UPROPERTY()
+		TArray<USceneComponent*> ValidExits;
+
+	UPROPERTY(EditDefaultsOnly)
+		TSubclassOf<ADoungeonChunkBase> DeadEndChunkClass;
+
+	UPROPERTY()
 		int32 ValidExitIndex = -1;
 
 	UFUNCTION()
@@ -42,6 +48,9 @@ public:
 	UFUNCTION(BlueprintCallable)
 		void GetPossibleExits(TArray<USceneComponent*>& OutPossibleExits);
 
-	
+	UFUNCTION()
+		void PlaceDeadEnds();
 
+	UFUNCTION()
+		void GetDeadExits(TArray<USceneComponent*>& OutExits);
 };

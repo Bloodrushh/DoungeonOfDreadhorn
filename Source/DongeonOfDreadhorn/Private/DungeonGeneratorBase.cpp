@@ -22,6 +22,13 @@ void ADungeonGeneratorBase::SpawnChunk()
 	TSubclassOf<ADoungeonChunkBase> ChunkClass;
 	FTransform SpawnTansform;
 	bool bFoundValidSpawnTransform = false;
+	bool bLasChunk = false;	
+
+	if (ChunksAmount == ChunksToSpawn)
+	{
+		bLasChunk = true;
+		ChunkClass = ExitChunkClass;
+	}
 
 	if (LastSpawnedChunk == nullptr)
 	{
@@ -33,7 +40,16 @@ void ADungeonGeneratorBase::SpawnChunk()
 	else
 	{
 		UE_LOG(LogTemp, Warning, TEXT("LastSpawnedChunk is valid. Getting snap transform."));
-		ChunkClass = ChunkClasses[FMath::RandRange(0, ChunkClasses.Num() - 1)];
+		if (bLasChunk)
+		{
+			ChunkClass = ExitChunkClass;
+		}
+		else
+		{
+			ChunkClass = ChunkClasses[FMath::RandRange(0, ChunkClasses.Num() - 1)];
+		}
+		//ChunkClass = bLasChunk ? ExitChunkClass : ChunkClasses[FMath::RandRange(0, ChunkClasses.Num() - 1)];
+		//ChunkClass = ChunkClasses[FMath::RandRange(0, ChunkClasses.Num() - 1)];
 		bFoundValidSpawnTransform = LastSpawnedChunk->TryGetValidExitSnapTransform(SpawnTansform);		
 	}
 
@@ -56,7 +72,7 @@ void ADungeonGeneratorBase::SpawnChunk()
 			bFoundValidSpawnTransform = SpawnedChunks[i]->TryGetValidExitSnapTransform(SpawnTansform);
 			if (bFoundValidSpawnTransform)
 			{
-				UE_LOG(LogTemp, Warning, TEXT("Successfully got snap transform from previous chunk: %s"), *SpawnedChunks[i]->GetHumanReadableName());
+				UE_LOG(LogTemp, Warning, TEXT("Successfully got snap transform from previous chunk: %s, transform: x=%f, y=%f, z=%f"), *SpawnedChunks[i]->GetHumanReadableName(), SpawnTansform.GetLocation().X, SpawnTansform.GetLocation().Y, SpawnTansform.GetLocation().Z);
 				LastSpawnedChunk = SpawnedChunks[i];
 				SpawnedChunk = GetWorld()->SpawnActor<ADoungeonChunkBase>(ChunkClass, SpawnTansform, SpawnParams);
 				break;
@@ -72,23 +88,28 @@ void ADungeonGeneratorBase::SpawnChunk()
 		UE_LOG(LogTemp, Warning, TEXT("Successfully spawned chunk: %s"), *SpawnedChunk->GetHumanReadableName());
 		LastSpawnedChunk = SpawnedChunk;
 		SpawnedChunks.Add(SpawnedChunk);
+		
+		if (bLasChunk)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Exit chunk spawned. Placing DeadEnds."));
+
+			for (auto Chunk : SpawnedChunks)
+			{
+				Chunk->PlaceDeadEnds();
+			}
+			return;
+		}
+		else
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Is NOT last chunk. Spawning next. Current ChunksAmount: %d"), ChunksAmount);
+			ChunksAmount++;
+			SpawnChunk();
+		}
 	}
 	else
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Failed to spawn chunk class: %s"), *ChunkClass.Get()->GetName());
-	}
-
-	ChunksAmount++;
-
-	if (ChunksAmount < ChunksToSpawn)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("ChunksAmount < ChunksToSpawn: %d"), ChunksAmount);
-		SpawnChunk();
-	}
-	else
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Finished spawn chunks"));
-	}
+	}	
 }
 
 
