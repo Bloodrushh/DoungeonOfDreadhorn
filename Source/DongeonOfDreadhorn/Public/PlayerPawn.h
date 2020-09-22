@@ -52,7 +52,7 @@ public:
 
 	UPROPERTY()
 		FVector DesiredLocation;
-
+	
 	UPROPERTY()
 		FRotator DesiredRotation;
 
@@ -73,7 +73,7 @@ public:
 		float TurnInterpSpeed = 10.0f;
 
 	UPROPERTY(EditDefaultsOnly)
-		float TurnReachDistance = 0.1f;
+		float TurnReachDistance = 0.99f;
 
 	UPROPERTY(BlueprintReadOnly)
 		float TurnAngle = 90.0f;

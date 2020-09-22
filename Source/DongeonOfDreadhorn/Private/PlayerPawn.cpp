@@ -141,7 +141,9 @@ void APlayerPawn::TurnLeft()
 
 void APlayerPawn::MakeStep()
 {
-	FVector NewLocation = FMath::VInterpTo(GetActorLocation(), DesiredLocation, UGameplayStatics::GetWorldDeltaSeconds(this), StepInterpSpeed);
+	//FVector NewLocation = FMath::VInterpTo(GetActorLocation(), DesiredLocation, UGameplayStatics::GetWorldDeltaSeconds(this), StepInterpSpeed);
+	FVector NewLocation = FMath::VInterpConstantTo(GetActorLocation(), DesiredLocation, UGameplayStatics::GetWorldDeltaSeconds(this), StepInterpSpeed);
+
 	if (SetActorLocation(NewLocation))
 	{
 		if ((DesiredLocation - GetActorLocation()).Size2D() <= StepReachDistance)
@@ -155,27 +157,21 @@ void APlayerPawn::MakeStep()
 
 void APlayerPawn::MakeTurn()
 {
-	//UE_LOG(LogTemp, Warning, TEXT("OurRotation: Pitch=%f, Yaw=%f, Roll=%f"), GetActorRotation().Pitch, GetActorRotation().Yaw, GetActorRotation().Roll);
-	//UE_LOG(LogTemp, Warning, TEXT("DesiredRotation: Pitch=%f, Yaw=%f, Roll=%f"), DesiredRotation.Pitch, DesiredRotation.Yaw, DesiredRotation.Roll);
-	FRotator NewRotation = FMath::RInterpTo(GetActorRotation(), DesiredRotation, UGameplayStatics::GetWorldDeltaSeconds(this), TurnInterpSpeed);
+	//FRotator NewRotation = FMath::RInterpTo(GetActorRotation(), DesiredRotation, UGameplayStatics::GetWorldDeltaSeconds(this), TurnInterpSpeed);
 
-	//UE_LOG(LogTemp, Warning, TEXT("NewRotation: Pitch=%f, Yaw=%f, Roll=%f"), NewRotation.Pitch, NewRotation.Yaw, NewRotation.Roll);
-	/*FRotator DeltaRotator = FRotator(0.0f, 90 * UGameplayStatics::GetWorldDeltaSeconds(this), 0.0f);
-	AddActorWorldRotation(DeltaRotator);*/
-	if (SetActorRotation(NewRotation))//SetActorRotation(NewRotation)
+	FRotator NewRotation = FMath::RInterpConstantTo(GetActorRotation(), DesiredRotation, UGameplayStatics::GetWorldDeltaSeconds(this), TurnInterpSpeed);
+
+	if (SetActorRotation(NewRotation))
 	{
-		//AddActorWorldRotation(DeltaRotator);
-		//UE_LOG(LogTemp, Warning, TEXT("Turn Distance: %f"), FMath::Abs((GetActorRotation().Yaw - DesiredRotation.Yaw)));
 		float DotProduct = FVector::DotProduct(GetActorRotation().Vector(), DesiredRotation.Vector());
-		if (DotProduct >= TurnReachDistance)//FMath::Abs((DesiredRotation.Yaw - GetActorRotation().Yaw)) <= TurnReachDistance		DesiredRotation.Yaw - GetActorRotation().Yaw <= TurnReachDistance
+		FVector CrossProduct = FVector::CrossProduct(GetActorRotation().Vector(), DesiredRotation.Vector());
+		//UE_LOG(LogTemp, Warning, TEXT("DotProduct: %f, CrossProduct: %f, Threshold: %f"), DotProduct, CrossProduct.Z, TurnReachDistance);
+		
+		if (DotProduct >= TurnReachDistance)/*CrossProduct.Z >= 0 ? DotProduct >= TurnReachDistance : DotProduct <= -TurnReachDistance*/
 		{
 			SetActorRotation(DesiredRotation);
 			bPendingTurn = false;
 			UE_LOG(LogTemp, Warning, TEXT("Can Make Next Turn."));
-		}
-		else
-		{
-			UE_LOG(LogTemp, Warning, TEXT("DotProduct: %f"), DotProduct);
 		}
 	}
 }
