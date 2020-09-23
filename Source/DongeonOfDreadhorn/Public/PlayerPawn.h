@@ -2,6 +2,7 @@
 
 #pragma once
 
+#include "Camera/CameraComponent.h"
 #include "CoreMinimal.h"
 #include "GameFramework/Pawn.h"
 #include "PlayerPawn.generated.h"
@@ -64,20 +65,23 @@ public:
 		float StepDistance = 500.0f;
 
 	UPROPERTY(EditDefaultsOnly)
-		float StepInterpSpeed = 2.0f;
+		float StepInterpSpeed = 1500.0f;
 
-	UPROPERTY(EditDefaultsOnly)
+	UPROPERTY()
 		float StepReachDistance = 0.1f;
 
 	UPROPERTY(EditDefaultsOnly)
-		float TurnInterpSpeed = 10.0f;
+		float TurnInterpSpeed = 270.0f;
 
-	UPROPERTY(EditDefaultsOnly)
-		float TurnReachDistance = 0.99f;
+	UPROPERTY()
+		float TurnReachDistance = 0.99999f;
 
 	UPROPERTY(BlueprintReadOnly)
 		float TurnAngle = 90.0f;
 
 	UFUNCTION()
 		bool CanMoveTo(FVector Destination);
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)/*, meta = (AllowPrivateAccess = "true")*/
+		UCameraComponent* Camera;
 };

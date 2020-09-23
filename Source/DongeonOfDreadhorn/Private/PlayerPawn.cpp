@@ -4,6 +4,7 @@
 #include "PlayerPawn.h"
 #include "Camera/CameraComponent.h"
 #include "Kismet/GameplayStatics.h"
+#include "HeadMountedDisplayFunctionLibrary.h"
 
 // Sets default values
 APlayerPawn::APlayerPawn()
@@ -13,10 +14,10 @@ APlayerPawn::APlayerPawn()
 
 	RootComponent = CreateDefaultSubobject<USceneComponent>(TEXT("RootComponent"));
 	VrOrigin = CreateDefaultSubobject<USceneComponent>(TEXT("VrOrigin"));
-	UCameraComponent* Camera = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera"));
+	Camera = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera"));
 	VrOrigin->SetupAttachment(RootComponent);
 	Camera->SetupAttachment(VrOrigin);
-	Camera->SetRelativeLocation(FVector(0.0f, 0.0f, 250.0f));
+	//Camera->SetRelativeLocation(FVector(0.0f, 0.0f, 250.0f));
 
 	AutoPossessPlayer = EAutoReceiveInput::Player0;
 }
@@ -25,7 +26,7 @@ APlayerPawn::APlayerPawn()
 void APlayerPawn::BeginPlay()
 {
 	Super::BeginPlay();
-	
+	UHeadMountedDisplayFunctionLibrary::SetTrackingOrigin(EHMDTrackingOrigin::Floor);
 }
 
 // Called every frame
@@ -42,10 +43,6 @@ void APlayerPawn::Tick(float DeltaTime)
 	{
 		MakeTurn();
 	}
-
-
-	//UE_LOG(LogTemp, Warning, TEXT("OurLocation: x=%f, y=%f, z=%f"), GetActorLocation().X, GetActorLocation().Y, GetActorLocation().Z);
-	//UE_LOG(LogTemp, Warning, TEXT("OurRotation: Pitch=%f, Yaw=%f, Roll=%f"), GetActorRotation().Pitch, GetActorRotation().Yaw, GetActorRotation().Roll);
 }
 
 // Called to bind functionality to input
@@ -113,7 +110,6 @@ void APlayerPawn::TurnRight()
 		{
 			NewYaw = GetActorRotation().Yaw + TurnAngle;
 		}
-		//UE_LOG(LogTemp, Warning, TEXT("Current Yaw: %f, New Yaw: %f"), GetActorRotation().Yaw, NewYaw);
 		DesiredRotation = FRotator(GetActorRotation().Pitch, NewYaw, GetActorRotation().Roll);
 		bPendingTurn = true;
 	}
@@ -133,7 +129,6 @@ void APlayerPawn::TurnLeft()
 		{
 			NewYaw = GetActorRotation().Yaw - TurnAngle;
 		}
-		//UE_LOG(LogTemp, Warning, TEXT("Current Yaw: %f, New Yaw: %f"), GetActorRotation().Yaw, NewYaw);
 		DesiredRotation = FRotator(GetActorRotation().Pitch, NewYaw, GetActorRotation().Roll);
 		bPendingTurn = true;
 	}
@@ -141,7 +136,6 @@ void APlayerPawn::TurnLeft()
 
 void APlayerPawn::MakeStep()
 {
-	//FVector NewLocation = FMath::VInterpTo(GetActorLocation(), DesiredLocation, UGameplayStatics::GetWorldDeltaSeconds(this), StepInterpSpeed);
 	FVector NewLocation = FMath::VInterpConstantTo(GetActorLocation(), DesiredLocation, UGameplayStatics::GetWorldDeltaSeconds(this), StepInterpSpeed);
 
 	if (SetActorLocation(NewLocation))
@@ -157,17 +151,14 @@ void APlayerPawn::MakeStep()
 
 void APlayerPawn::MakeTurn()
 {
-	//FRotator NewRotation = FMath::RInterpTo(GetActorRotation(), DesiredRotation, UGameplayStatics::GetWorldDeltaSeconds(this), TurnInterpSpeed);
-
 	FRotator NewRotation = FMath::RInterpConstantTo(GetActorRotation(), DesiredRotation, UGameplayStatics::GetWorldDeltaSeconds(this), TurnInterpSpeed);
 
 	if (SetActorRotation(NewRotation))
 	{
 		float DotProduct = FVector::DotProduct(GetActorRotation().Vector(), DesiredRotation.Vector());
 		FVector CrossProduct = FVector::CrossProduct(GetActorRotation().Vector(), DesiredRotation.Vector());
-		//UE_LOG(LogTemp, Warning, TEXT("DotProduct: %f, CrossProduct: %f, Threshold: %f"), DotProduct, CrossProduct.Z, TurnReachDistance);
 		
-		if (DotProduct >= TurnReachDistance)/*CrossProduct.Z >= 0 ? DotProduct >= TurnReachDistance : DotProduct <= -TurnReachDistance*/
+		if (DotProduct >= TurnReachDistance)
 		{
 			SetActorRotation(DesiredRotation);
 			bPendingTurn = false;
