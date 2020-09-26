@@ -16,23 +16,14 @@ void ADoungeonChunkBase::BeginPlay()
 	Super::BeginPlay();
 	
 	FindAndChachePossibleExits();
-	ChooseValidExit();
-	FindAndChacheFloors();
+	UpdateValidExits();
 	//UE_LOG(LogTemp, Warning, TEXT("BeginPlay"));
 }
 
-void ADoungeonChunkBase::ChooseValidExit()
+void ADoungeonChunkBase::UpdateValidExits()
 {
-	/*if (PossibleExits.Num() > 1)
-	{
-		ValidExitIndex = FMath::RandRange(0, PossibleExits.Num());
-	}
-	else
-	{	
-		
-	}*/
+	ValidExits.Empty();
 
-	//TArray<USceneComponent*> FilteredExits;
 	for (auto Exit : PossibleExits)
 	{
 		FVector TraceStart = Exit->GetComponentTransform().GetLocation();
@@ -41,60 +32,101 @@ void ADoungeonChunkBase::ChooseValidExit()
 		ECollisionChannel TraceChannel = ECollisionChannel::ECC_Visibility;
 		FCollisionQueryParams QuerryParams;
 		QuerryParams.AddIgnoredActor(this);
-		/*FCollisionResponseParams ResponseParams;
-		ResponseParams.CollisionResponse.Visibility;*/
+
 		if (!GetWorld()->LineTraceTestByChannel(TraceStart, TraceEnd, TraceChannel, QuerryParams))
 		{
-			//UE_LOG(LogTemp, Warning, TEXT("Exit: %s is NOT blocked."), *Exit->GetReadableName());
-			//FilteredExits.Add(Exit);
-			if (!ValidExits.Contains(Exit))
-			{
-				ValidExits.Add(Exit);
-			}			
+			ValidExits.Add(Exit);
 		}
-		else
-		{
-			if (ValidExits.Contains(Exit))
-			{
-				ValidExits.Remove(Exit);
-			}
-			//UE_LOG(LogTemp, Warning, TEXT("Exit: %s is blocked"), *Exit->GetReadableName());
-		}
-	}
-
-	if (ValidExits.Num() > 0)
-	{
-		ValidExitIndex = FMath::RandRange(0, ValidExits.Num() - 1);
-		//UE_LOG(LogTemp, Warning, TEXT("ValidExitIndex: %d"), ValidExitIndex);
-	}
-	else
-	{
-		ValidExitIndex = -1;
 	}
 }
 
-bool ADoungeonChunkBase::TryGetValidExitSnapTransform(FTransform & OutTransform)
+bool ADoungeonChunkBase::TryGetSpawnTransformForChunk(TSubclassOf<ADoungeonChunkBase> SpawningChunkClass, FTransform & OutTransform)
 {
-	/*UWorld* World = GetWorld();
-	TSubclassOf<ADoungeonChunkBase> ChunkClass;
-	ADoungeonChunkBase* ChunkCDO = ChunkClass.GetDefaultObject();
-	for (auto Floor : ChunkCDO->Floors)
+	UpdateValidExits();
+	//DEBUG
+	/*for (auto Exit : ValidExits)
 	{
-		FVector Start = Floor->GetComponentLocation() + FVector(0.0f, 0.0f, 250);
-		FVector End = Floor->GetComponentLocation();
-		FHitResult HitResult;
-		bool bHit = World->LineTraceSingleByChannel(HitResult, Start, End, ECollisionChannel::ECC_Visibility);
-		if (bHit)
+		UE_LOG(LogTemp, Warning, TEXT("ValidExit: %s"), *Exit->GetFullName());
+	}*/
+	
+
+	ADoungeonChunkBase* ChunkCDO = SpawningChunkClass.GetDefaultObject();
+	TArray<USceneComponent*> Floors;
+	TArray<USceneComponent*> AvailableExits;
+
+	UWorld* World = GetWorld();
+
+	for (auto ChildComponent : GetComponentsByTag(USceneComponent::StaticClass(), FloorTag))
+	{
+		//ChildComponent->IsA<USceneComponent>();
+		USceneComponent* SceneComponent = Cast<USceneComponent>(ChildComponent);
+		if (SceneComponent)
 		{
-			return false;
+			//UE_LOG(LogTemp, Warning, TEXT("Added Floor: %s"), *SceneComponent->GetFullName());
+			Floors.Add(SceneComponent);
 		}
+		else
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Component is not a USceneComponent: %s"), *SceneComponent->GetClass()->GetFullName());
+		}
+	}
+
+	//DEBUG
+	/*for (auto Floor : Floors)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Floor: %s"), *Floor->GetFullName());
 	}*/
 
+	for (auto Exit : ValidExits)
+	{
+		bool bFoundAvailabeExit = false;
+		FTransform ExitTransform = Exit->GetComponentTransform();
+		
+		for (auto Floor : Floors)
+		{
+			FVector End = ExitTransform.TransformPosition(Floor->GetComponentLocation());
+			FVector Start = End + FVector(0.0f, 0.0f, 250);
+			FHitResult HitResult;
 
-	ChooseValidExit();
-	if (!ValidExits.IsValidIndex(ValidExitIndex)) { return false; }
+#if ENABLE_DRAW_DEBUG
+			DrawDebugLine(GetWorld(), Start, End, FColor::Yellow, false, 99.0f, 0, 1);
+#endif
+			
+			if (World->LineTraceSingleByChannel(HitResult, Start, End, ECollisionChannel::ECC_Visibility))
+			{
+				//UE_LOG(LogTemp, Warning, TEXT("HitSomething at the location: X=%f. Y=%f, Z=%f"), End.X, End.Y, End.Z);
+				bFoundAvailabeExit = false;
+				break;
+			}
+			bFoundAvailabeExit = true;
+		}
+
+		if (bFoundAvailabeExit)
+		{
+			//UE_LOG(LogTemp, Warning, TEXT("Added exit to AvailableExits: %s"), *Exit->GetFullName());
+			AvailableExits.Add(Exit);
+		}
+	}
+
+	if (AvailableExits.Num() > 0)
+	{
+		//UE_LOG(LogTemp, Warning, TEXT("AvailableExits.Num() > 0"));
+		if (AvailableExits.Num() > 1)
+		{
+			//UE_LOG(LogTemp, Warning, TEXT("AvailableExits.Num() > 1"));
+			int32 ExitIndex = FMath::RandRange(0, AvailableExits.Num() - 1);
+			OutTransform = AvailableExits[ExitIndex]->GetComponentTransform();
+		}
+
+		OutTransform = AvailableExits[0]->GetComponentTransform();
+		return true;
+	}
+	
+	/*if (!ValidExits.IsValidIndex(ValidExitIndex)) { return false; }
 	OutTransform = ValidExits[ValidExitIndex]->GetComponentTransform();
-	return true;
+	return true;*/
+	//UE_LOG(LogTemp, Warning, TEXT("AvailableExits.Num() <= 0"));
+	return false;
 }
 
 void ADoungeonChunkBase::FindAndChachePossibleExits()
@@ -106,18 +138,6 @@ void ADoungeonChunkBase::FindAndChachePossibleExits()
 		if (ChildSceneComponent)
 		{
 			PossibleExits.Add(ChildSceneComponent);
-		}		
-	}
-}
-
-void ADoungeonChunkBase::FindAndChacheFloors()
-{
-	for (auto ChildComponent : GetComponentsByTag(USceneComponent::StaticClass(), FloorTag))
-	{
-		USceneComponent* SceneComponent = Cast<USceneComponent>(ChildComponent);
-		if (SceneComponent)
-		{
-			Floors.Add(SceneComponent);
 		}		
 	}
 }
@@ -147,15 +167,20 @@ void ADoungeonChunkBase::GetDeadExits(TArray<USceneComponent*>& OutExits)
 {
 	for (auto Exit : PossibleExits)
 	{
-		float TraceLength = ((GetRootComponent()->GetComponentTransform().GetLocation() - Exit->GetComponentTransform().GetLocation()).Size2D() / 2) - 50;
+		/*float TraceLength = ((GetRootComponent()->GetComponentTransform().GetLocation() - Exit->GetComponentTransform().GetLocation()).Size2D() / 2) - 50;
 		FVector TraceStart = Exit->GetComponentTransform().GetLocation();		
-		FVector TraceEnd = Exit->GetComponentTransform().GetLocation() + ((Exit->GetForwardVector()* -1) * TraceLength);
+		FVector TraceEnd = Exit->GetComponentTransform().GetLocation() + ((Exit->GetForwardVector()* -1) * TraceLength);*/
+
+		
+		FVector TraceEnd = Exit->GetComponentTransform().GetLocation();
+		FVector TraceStart = TraceEnd + FVector(0.0f, 0.0f, 250.f);
 
 		ECollisionChannel TraceChannel = ECollisionChannel::ECC_WorldStatic;
 		FCollisionQueryParams QuerryParams;
 		FCollisionObjectQueryParams ObjectQuerryParams;
 		FHitResult HitResult;		
 		const bool bHit = GetWorld()->LineTraceSingleByObjectType(HitResult, TraceStart, TraceEnd, ObjectQuerryParams, QuerryParams);
+		//const bool bHit = GetWorld()->LineTraceSingleByObjectType(HitResult, TraceStart, TraceEnd, ObjectQuerryParams, QuerryParams);
 
 		if (!bHit)
 		{

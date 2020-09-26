@@ -8,6 +8,7 @@
 #include "PlayerPawn.generated.h"
 
 class AHandBase;
+class AFootPrintDecal;
 
 UCLASS()
 class DONGEONOFDREADHORN_API APlayerPawn : public APawn
@@ -95,4 +96,16 @@ public:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 		AHandBase* RightHand;
+
+	UFUNCTION()
+		void SpawnFootPrint();
+
+	UPROPERTY(EditDefaultsOnly)
+		TSubclassOf<AFootPrintDecal> FootPrintDecalClass;
+
+	UPROPERTY()
+		TArray<AFootPrintDecal*> FootPrints;
+
+	UPROPERTY(EditDefaultsOnly)
+		int32 MaxFootPrints;
 };

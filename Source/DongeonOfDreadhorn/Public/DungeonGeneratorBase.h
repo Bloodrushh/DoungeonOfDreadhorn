@@ -32,6 +32,9 @@ public:
 		TSubclassOf<ADoungeonChunkBase> ExitChunkClass;
 
 	UPROPERTY()
+		TArray<TSubclassOf<ADoungeonChunkBase>> BannedChunkClasses;
+
+	UPROPERTY()
 		ADoungeonChunkBase* LastSpawnedChunk;
 
 	UPROPERTY()

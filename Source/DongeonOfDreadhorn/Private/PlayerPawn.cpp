@@ -6,6 +6,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "HeadMountedDisplayFunctionLibrary.h"
 #include "HandBase.h"
+#include "FootPrintDecal.h"
 
 // Sets default values
 APlayerPawn::APlayerPawn()
@@ -159,6 +160,7 @@ void APlayerPawn::MakeStep()
 	{
 		if ((DesiredLocation - GetActorLocation()).Size2D() <= StepReachDistance)
 		{
+			SpawnFootPrint();
 			SetActorLocation(DesiredLocation);
 			bPendingStep = false;
 			UE_LOG(LogTemp, Warning, TEXT("Can Make Next Step: "));
@@ -192,6 +194,35 @@ bool APlayerPawn::CanMoveTo(FVector Destination)
 	FCollisionQueryParams QuerryParams;
 	QuerryParams.AddIgnoredActor(this);	
 	return !GetWorld()->LineTraceTestByChannel(TraceStart, TraceEnd, TraceChannel, QuerryParams);
+}
+
+void APlayerPawn::SpawnFootPrint()
+{
+	FHitResult HitResult;
+	ECollisionChannel TraceChannel = ECollisionChannel::ECC_Visibility;
+	FCollisionQueryParams QuerryParams;	
+	QuerryParams.AddIgnoredActor(this);
+	QuerryParams.AddIgnoredActor(LeftHand);
+	QuerryParams.AddIgnoredActor(RightHand);
+	if (GetWorld()->LineTraceSingleByChannel(HitResult, GetActorLocation(), GetActorLocation() - FVector(0.0f, 0.0f, 250.f), TraceChannel, QuerryParams))
+	{
+		FVector Location = HitResult.ImpactPoint;
+		FRotator Rotation = FRotator();
+		FActorSpawnParameters SpawnParammeters;
+		AFootPrintDecal* SpawnedFoorPrint = GetWorld()->SpawnActor<AFootPrintDecal>(FootPrintDecalClass, Location, Rotation, SpawnParammeters);
+		if (SpawnedFoorPrint)
+		{
+			if (FootPrints.Num() >= MaxFootPrints)
+			{
+				AFootPrintDecal* FoorPrintToRemove = FootPrints[0];
+				FootPrints.Remove(FoorPrintToRemove);
+				FoorPrintToRemove->Destroy();
+			}
+			FootPrints.Add(SpawnedFoorPrint);
+		}
+	}
+
+	
 }
 
 

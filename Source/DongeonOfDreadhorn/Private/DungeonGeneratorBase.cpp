@@ -46,29 +46,26 @@ void ADungeonGeneratorBase::SpawnChunk()
 		}
 		else
 		{
-			//ADoungeonChunkBase* ChunkCDO = ChunkClass.GetDefaultObject();
-			//ChunkCDO->exit
-			TArray<TSubclassOf<ADoungeonChunkBase>> ChunksPool = ChunkClasses;
-			/*UE_LOG(LogTemp, Warning, TEXT("ChunksPool before filtering"));
-			for (auto Chunk : ChunksPool)
+			TArray<TSubclassOf<ADoungeonChunkBase>> ChunksPool;
+			for (auto Chunk : ChunkClasses)
 			{
-				
-				UE_LOG(LogTemp, Warning, TEXT("Chunk calss: %s"), *Chunk->GetFullName());
+				if (!BannedChunkClasses.Contains(Chunk))
+				{
+					ChunksPool.Add(Chunk);
+				}
 			}
-
-			UE_LOG(LogTemp, Warning, TEXT("Removing chunk class: %s"), *LastSpawnedChunk->GetClass()->GetFullName());*/
-			ChunksPool.Remove(LastSpawnedChunk->GetClass());
-
-			/*UE_LOG(LogTemp, Warning, TEXT("ChunksPool after filtering"));
-			for (auto Chunk : ChunksPool)
+			//ChunksPool.Remove(LastSpawnedChunk->GetClass());
+			if (ChunksPool.Num() > 0)
 			{
-				UE_LOG(LogTemp, Warning, TEXT("Chunk calss: %s"), *Chunk->GetFullName());
-			}*/
+				ChunkClass = ChunksPool[FMath::RandRange(0, ChunksPool.Num() - 1)];
+			}
+			else
+			{
+				UE_LOG(LogTemp, Warning, TEXT("ChunksPool.Num() < 0"));
+			}
 			
-			ChunkClass = ChunksPool[FMath::RandRange(0, ChunksPool.Num() - 1)];
-			//ChunkClass = ChunkClasses[FMath::RandRange(0, ChunkClasses.Num() - 1)];ChunksPool
 		}
-		bFoundValidSpawnTransform = LastSpawnedChunk->TryGetValidExitSnapTransform(SpawnTansform);		
+		bFoundValidSpawnTransform = LastSpawnedChunk->TryGetSpawnTransformForChunk(ChunkClass, SpawnTansform);
 	}
 
 	FActorSpawnParameters SpawnParams;
@@ -85,7 +82,7 @@ void ADungeonGeneratorBase::SpawnChunk()
 
 		for (int32 i = SpawnedChunks.Num() - 1; i > 0; i--)
 		{
-			bFoundValidSpawnTransform = SpawnedChunks[i]->TryGetValidExitSnapTransform(SpawnTansform);
+			bFoundValidSpawnTransform = SpawnedChunks[i]->TryGetSpawnTransformForChunk(ChunkClass, SpawnTansform);
 			if (bFoundValidSpawnTransform)
 			{
 				//UE_LOG(LogTemp, Warning, TEXT("Successfully got snap transform from previous chunk: %s, transform: x=%f, y=%f, z=%f"), *SpawnedChunks[i]->GetHumanReadableName(), SpawnTansform.GetLocation().X, SpawnTansform.GetLocation().Y, SpawnTansform.GetLocation().Z);
@@ -100,8 +97,11 @@ void ADungeonGeneratorBase::SpawnChunk()
 	if (SpawnedChunk != nullptr)
 	{
 		//UE_LOG(LogTemp, Warning, TEXT("Successfully spawned chunk: %s"), *SpawnedChunk->GetHumanReadableName());
-		LastSpawnedChunk = SpawnedChunk;
+		
 		SpawnedChunks.Add(SpawnedChunk);
+		BannedChunkClasses.Empty();
+		BannedChunkClasses.Add(ChunkClass);
+		LastSpawnedChunk = SpawnedChunk;
 		
 		if (bLasChunk)
 		{
@@ -122,6 +122,12 @@ void ADungeonGeneratorBase::SpawnChunk()
 	}
 	else
 	{
+		// Change chunk class and retry 
+		BannedChunkClasses.Add(ChunkClass);
+		if (BannedChunkClasses.Num() < ChunkClasses.Num())
+		{
+			SpawnChunk();
+		}		
 		UE_LOG(LogTemp, Warning, TEXT("Failed to spawn chunk class: %s"), *ChunkClass.Get()->GetName());
 	}	
 }

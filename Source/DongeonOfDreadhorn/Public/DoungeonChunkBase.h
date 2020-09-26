@@ -30,26 +30,17 @@ public:
 	UPROPERTY(EditDefaultsOnly)
 		TSubclassOf<ADoungeonChunkBase> DeadEndChunkClass;
 
-	UPROPERTY()
-		int32 ValidExitIndex = -1;
-
 	UFUNCTION()
-		void ChooseValidExit();
+		void UpdateValidExits();
 
 	UFUNCTION(BlueprintCallable)
-		bool TryGetValidExitSnapTransform( FTransform& OutTransform);
+		bool TryGetSpawnTransformForChunk(TSubclassOf<ADoungeonChunkBase> SpawningChunkClass, FTransform & OutTransform);
 
 	UFUNCTION()
 		void FindAndChachePossibleExits();
 
 	UPROPERTY()
 		FName ExitSnapPointTag = TEXT("ExitSnapPoint");
-
-	UPROPERTY()
-		TArray<USceneComponent*> Floors;
-
-	UFUNCTION()
-		void FindAndChacheFloors();
 
 	UPROPERTY()
 		FName FloorTag = TEXT("FloorSnapPoint");
