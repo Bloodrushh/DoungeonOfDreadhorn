@@ -3,7 +3,8 @@
 
 #include "DoungeonChunkBase.h"
 #include "DrawDebugHelpers.h"
-
+#include "Engine/BlueprintGeneratedClass.h"
+#include "Engine/SCS_Node.h"
 // Sets default values
 ADoungeonChunkBase::ADoungeonChunkBase()
 {
@@ -48,15 +49,36 @@ bool ADoungeonChunkBase::TryGetSpawnTransformForChunk(TSubclassOf<ADoungeonChunk
 	{
 		UE_LOG(LogTemp, Warning, TEXT("ValidExit: %s"), *Exit->GetFullName());
 	}*/
-	
-
-	ADoungeonChunkBase* ChunkCDO = SpawningChunkClass.GetDefaultObject();
 	TArray<USceneComponent*> Floors;
+	UBlueprintGeneratedClass* BluepinrtClass = Cast<UBlueprintGeneratedClass>(SpawningChunkClass);
+	const TArray<USCS_Node*>& ActorBlueprintNodes = BluepinrtClass->SimpleConstructionScript->GetAllNodes();
+	UE_LOG(LogTemp, Warning, TEXT("Trying to get floors from class: %s"), *SpawningChunkClass->GetFullName());
+	
+	for (USCS_Node* Node : ActorBlueprintNodes)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Checnkin Node class: %s"), *Node->ComponentClass->GetFullName());
+		if (Node->ComponentClass == UStaticMeshComponent::StaticClass())
+		{
+			UE_LOG(LogTemp, Warning, TEXT("FoundStaticMeshComponent"));
+			USceneComponent* SceneComponent = Cast<USceneComponent>(Node->ComponentTemplate);
+			if (SceneComponent)
+			{
+				if (SceneComponent->ComponentHasTag(FloorTag))
+				{
+					Floors.Add(SceneComponent);
+				}				
+			}
+		}
+	}
+
+	//ADoungeonChunkBase* ChunkCDO = SpawningChunkClass.GetDefaultObject();
+	
 	TArray<USceneComponent*> AvailableExits;
 
 	UWorld* World = GetWorld();
 
-	for (auto ChildComponent : GetComponentsByTag(USceneComponent::StaticClass(), FloorTag))
+	
+	/*for (auto ChildComponent : ChunkCDO->GetComponentsByTag(USceneComponent::StaticClass(), FloorTag))
 	{
 		//ChildComponent->IsA<USceneComponent>();
 		USceneComponent* SceneComponent = Cast<USceneComponent>(ChildComponent);
@@ -69,8 +91,8 @@ bool ADoungeonChunkBase::TryGetSpawnTransformForChunk(TSubclassOf<ADoungeonChunk
 		{
 			UE_LOG(LogTemp, Warning, TEXT("Component is not a USceneComponent: %s"), *SceneComponent->GetClass()->GetFullName());
 		}
-	}
-
+	}*/
+	UE_LOG(LogTemp, Warning, TEXT("Floors amount: %d"), Floors.Num());
 	//DEBUG
 	/*for (auto Floor : Floors)
 	{
@@ -84,14 +106,13 @@ bool ADoungeonChunkBase::TryGetSpawnTransformForChunk(TSubclassOf<ADoungeonChunk
 		
 		for (auto Floor : Floors)
 		{
-			FVector End = ExitTransform.TransformPosition(Floor->GetComponentLocation());
+			UE_LOG(LogTemp, Warning, TEXT("Class: %s, Checking Floor: %s"), *SpawningChunkClass->GetFullName(), *Floor->GetFullName());
+			FVector End = ExitTransform.TransformPosition(Floor->GetRelativeLocation());
 			FVector Start = End + FVector(0.0f, 0.0f, 250);
 			FHitResult HitResult;
 
-#if ENABLE_DRAW_DEBUG
-			DrawDebugLine(GetWorld(), Start, End, FColor::Yellow, false, 99.0f, 0, 1);
-#endif
-			
+			//DrawDebugLine(GetWorld(), Start, End, FColor::Yellow, false, 99.0f, 0, 5);
+
 			if (World->LineTraceSingleByChannel(HitResult, Start, End, ECollisionChannel::ECC_Visibility))
 			{
 				//UE_LOG(LogTemp, Warning, TEXT("HitSomething at the location: X=%f. Y=%f, Z=%f"), End.X, End.Y, End.Z);
@@ -192,10 +213,8 @@ void ADoungeonChunkBase::GetDeadExits(TArray<USceneComponent*>& OutExits)
 			
 			//UE_LOG(LogTemp, Warning, TEXT("Exit: %s is blocked by : %s"), *Exit->GetReadableName(), *HitResult.Actor->GetHumanReadableName());
 
-		}		
-	#if ENABLE_DRAW_DEBUG
-		DrawDebugLine(GetWorld(), TraceStart, TraceEnd, FColor::Blue, false, 55.0f, 0, 1);
-	#endif
+		}			
+		//DrawDebugLine(GetWorld(), TraceStart, TraceEnd, FColor::Blue, false, 55.0f, 0, 1);
 	}
 }
 
