@@ -5,6 +5,7 @@
 #include "Camera/CameraComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "HeadMountedDisplayFunctionLibrary.h"
+#include "HandBase.h"
 
 // Sets default values
 APlayerPawn::APlayerPawn()
@@ -17,7 +18,6 @@ APlayerPawn::APlayerPawn()
 	Camera = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera"));
 	VrOrigin->SetupAttachment(RootComponent);
 	Camera->SetupAttachment(VrOrigin);
-	//Camera->SetRelativeLocation(FVector(0.0f, 0.0f, 250.0f));
 
 	AutoPossessPlayer = EAutoReceiveInput::Player0;
 }
@@ -27,6 +27,23 @@ void APlayerPawn::BeginPlay()
 {
 	Super::BeginPlay();
 	UHeadMountedDisplayFunctionLibrary::SetTrackingOrigin(EHMDTrackingOrigin::Floor);
+
+
+	if (HandClass)
+	{
+		FAttachmentTransformRules AttachmentRuesl = FAttachmentTransformRules(EAttachmentRule::SnapToTarget, EAttachmentRule::SnapToTarget, EAttachmentRule::KeepWorld, false);
+		FTransform SpawnTransform = GetActorTransform();
+
+		RightHand = GetWorld()->SpawnActorDeferred<AHandBase>(HandClass, SpawnTransform, this, this, ESpawnActorCollisionHandlingMethod::AlwaysSpawn);
+		RightHand->Hand = EControllerHand::Right;
+		UGameplayStatics::FinishSpawningActor(RightHand, SpawnTransform);
+		RightHand->AttachToComponent(VrOrigin, AttachmentRuesl);
+
+		LeftHand = GetWorld()->SpawnActorDeferred<AHandBase>(HandClass, SpawnTransform, this, this, ESpawnActorCollisionHandlingMethod::AlwaysSpawn);
+		LeftHand->Hand = EControllerHand::Left;
+		UGameplayStatics::FinishSpawningActor(LeftHand, SpawnTransform);
+		LeftHand->AttachToComponent(VrOrigin, AttachmentRuesl);
+	}	
 }
 
 // Called every frame

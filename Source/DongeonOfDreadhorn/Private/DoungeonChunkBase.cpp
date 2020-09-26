@@ -17,7 +17,8 @@ void ADoungeonChunkBase::BeginPlay()
 	
 	FindAndChachePossibleExits();
 	ChooseValidExit();
-	UE_LOG(LogTemp, Warning, TEXT("BeginPlay"));
+	FindAndChacheFloors();
+	//UE_LOG(LogTemp, Warning, TEXT("BeginPlay"));
 }
 
 void ADoungeonChunkBase::ChooseValidExit()
@@ -44,7 +45,7 @@ void ADoungeonChunkBase::ChooseValidExit()
 		ResponseParams.CollisionResponse.Visibility;*/
 		if (!GetWorld()->LineTraceTestByChannel(TraceStart, TraceEnd, TraceChannel, QuerryParams))
 		{
-			UE_LOG(LogTemp, Warning, TEXT("Exit: %s is NOT blocked."), *Exit->GetReadableName());
+			//UE_LOG(LogTemp, Warning, TEXT("Exit: %s is NOT blocked."), *Exit->GetReadableName());
 			//FilteredExits.Add(Exit);
 			if (!ValidExits.Contains(Exit))
 			{
@@ -57,14 +58,14 @@ void ADoungeonChunkBase::ChooseValidExit()
 			{
 				ValidExits.Remove(Exit);
 			}
-			UE_LOG(LogTemp, Warning, TEXT("Exit: %s is blocked"), *Exit->GetReadableName());
+			//UE_LOG(LogTemp, Warning, TEXT("Exit: %s is blocked"), *Exit->GetReadableName());
 		}
 	}
 
 	if (ValidExits.Num() > 0)
 	{
 		ValidExitIndex = FMath::RandRange(0, ValidExits.Num() - 1);
-		UE_LOG(LogTemp, Warning, TEXT("ValidExitIndex: %d"), ValidExitIndex);
+		//UE_LOG(LogTemp, Warning, TEXT("ValidExitIndex: %d"), ValidExitIndex);
 	}
 	else
 	{
@@ -74,6 +75,22 @@ void ADoungeonChunkBase::ChooseValidExit()
 
 bool ADoungeonChunkBase::TryGetValidExitSnapTransform(FTransform & OutTransform)
 {
+	/*UWorld* World = GetWorld();
+	TSubclassOf<ADoungeonChunkBase> ChunkClass;
+	ADoungeonChunkBase* ChunkCDO = ChunkClass.GetDefaultObject();
+	for (auto Floor : ChunkCDO->Floors)
+	{
+		FVector Start = Floor->GetComponentLocation() + FVector(0.0f, 0.0f, 250);
+		FVector End = Floor->GetComponentLocation();
+		FHitResult HitResult;
+		bool bHit = World->LineTraceSingleByChannel(HitResult, Start, End, ECollisionChannel::ECC_Visibility);
+		if (bHit)
+		{
+			return false;
+		}
+	}*/
+
+
 	ChooseValidExit();
 	if (!ValidExits.IsValidIndex(ValidExitIndex)) { return false; }
 	OutTransform = ValidExits[ValidExitIndex]->GetComponentTransform();
@@ -93,6 +110,18 @@ void ADoungeonChunkBase::FindAndChachePossibleExits()
 	}
 }
 
+void ADoungeonChunkBase::FindAndChacheFloors()
+{
+	for (auto ChildComponent : GetComponentsByTag(USceneComponent::StaticClass(), FloorTag))
+	{
+		USceneComponent* SceneComponent = Cast<USceneComponent>(ChildComponent);
+		if (SceneComponent)
+		{
+			Floors.Add(SceneComponent);
+		}		
+	}
+}
+
 void ADoungeonChunkBase::GetPossibleExits(TArray<USceneComponent*>& OutPossibleExits)
 {
 	OutPossibleExits = PossibleExits;
@@ -100,7 +129,7 @@ void ADoungeonChunkBase::GetPossibleExits(TArray<USceneComponent*>& OutPossibleE
 
 void ADoungeonChunkBase::PlaceDeadEnds()
 {	
-	UE_LOG(LogTemp, Warning, TEXT("PacingDeadEnds for chunk: %s"), *GetHumanReadableName());
+	//UE_LOG(LogTemp, Warning, TEXT("PacingDeadEnds for chunk: %s"), *GetHumanReadableName());
 	//ChooseValidExit();
 
 	TArray<USceneComponent*> DeadExits;
@@ -109,7 +138,7 @@ void ADoungeonChunkBase::PlaceDeadEnds()
 	for (auto Exit : DeadExits)
 	{	
 		FTransform  SpawnTansform = Exit->GetComponentTransform();
-		UE_LOG(LogTemp, Warning, TEXT("Successfully found place for DeadEnd: x=%f, y=%f, z=%f"), SpawnTansform.GetLocation().X, SpawnTansform.GetLocation().Y, SpawnTansform.GetLocation().Z);
+		//UE_LOG(LogTemp, Warning, TEXT("Successfully found place for DeadEnd: x=%f, y=%f, z=%f"), SpawnTansform.GetLocation().X, SpawnTansform.GetLocation().Y, SpawnTansform.GetLocation().Z);
 		GetWorld()->SpawnActor<ADoungeonChunkBase>(DeadEndChunkClass, SpawnTansform, SpawnParams);		
 	}
 }
@@ -130,13 +159,13 @@ void ADoungeonChunkBase::GetDeadExits(TArray<USceneComponent*>& OutExits)
 
 		if (!bHit)
 		{
-			UE_LOG(LogTemp, Warning, TEXT("Exit: %s is NOT blocked."), *Exit->GetReadableName());
+			//UE_LOG(LogTemp, Warning, TEXT("Exit: %s is NOT blocked."), *Exit->GetReadableName());
 			OutExits.Add(Exit);
 		}
 		else
 		{
 			
-			UE_LOG(LogTemp, Warning, TEXT("Exit: %s is blocked by : %s"), *Exit->GetReadableName(), *HitResult.Actor->GetHumanReadableName());
+			//UE_LOG(LogTemp, Warning, TEXT("Exit: %s is blocked by : %s"), *Exit->GetReadableName(), *HitResult.Actor->GetHumanReadableName());
 
 		}		
 	#if ENABLE_DRAW_DEBUG

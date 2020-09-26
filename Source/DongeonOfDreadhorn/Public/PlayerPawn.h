@@ -7,6 +7,8 @@
 #include "GameFramework/Pawn.h"
 #include "PlayerPawn.generated.h"
 
+class AHandBase;
+
 UCLASS()
 class DONGEONOFDREADHORN_API APlayerPawn : public APawn
 {
@@ -84,4 +86,13 @@ public:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)/*, meta = (AllowPrivateAccess = "true")*/
 		UCameraComponent* Camera;
+
+	UPROPERTY(EditDefaultsOnly)
+		TSubclassOf<AHandBase> HandClass;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+		AHandBase* LeftHand;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+		AHandBase* RightHand;
 };

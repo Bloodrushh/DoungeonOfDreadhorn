@@ -45,6 +45,15 @@ public:
 	UPROPERTY()
 		FName ExitSnapPointTag = TEXT("ExitSnapPoint");
 
+	UPROPERTY()
+		TArray<USceneComponent*> Floors;
+
+	UFUNCTION()
+		void FindAndChacheFloors();
+
+	UPROPERTY()
+		FName FloorTag = TEXT("FloorSnapPoint");
+
 	UFUNCTION(BlueprintCallable)
 		void GetPossibleExits(TArray<USceneComponent*>& OutPossibleExits);
 
