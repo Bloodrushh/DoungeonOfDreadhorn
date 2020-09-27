@@ -43,18 +43,13 @@ void ADoungeonChunkBase::UpdateValidExits()
 
 bool ADoungeonChunkBase::TryGetSpawnTransformForChunk(TSubclassOf<ADoungeonChunkBase> SpawningChunkClass, FTransform & OutTransform)
 {
-	UpdateValidExits();
-	//DEBUG
-	/*for (auto Exit : ValidExits)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("ValidExit: %s"), *Exit->GetFullName());
-	}*/
+	UpdateValidExits();	
 	TArray<USceneComponent*> Floors;
-	UBlueprintGeneratedClass* BluepinrtClass = Cast<UBlueprintGeneratedClass>(SpawningChunkClass);
-	const TArray<USCS_Node*>& ActorBlueprintNodes = BluepinrtClass->SimpleConstructionScript->GetAllNodes();
-	UE_LOG(LogTemp, Warning, TEXT("Trying to get floors from class: %s"), *SpawningChunkClass->GetFullName());
-	
-	for (USCS_Node* Node : ActorBlueprintNodes)
+	UBlueprintGeneratedClass* ParentBluepinrtClass = Cast<UBlueprintGeneratedClass>(SpawningChunkClass->GetSuperClass());
+	const TArray<USCS_Node*>& ParentActorBlueprintNodes = ParentBluepinrtClass->SimpleConstructionScript->GetAllNodes();
+	UE_LOG(LogTemp, Warning, TEXT("Trying to get floors from parent class: %s"), *SpawningChunkClass->GetFullName());
+
+	for (USCS_Node* Node : ParentActorBlueprintNodes)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Checnkin Node class: %s"), *Node->ComponentClass->GetFullName());
 		if (Node->ComponentClass == UStaticMeshComponent::StaticClass())
@@ -65,39 +60,41 @@ bool ADoungeonChunkBase::TryGetSpawnTransformForChunk(TSubclassOf<ADoungeonChunk
 			{
 				if (SceneComponent->ComponentHasTag(FloorTag))
 				{
+					UE_LOG(LogTemp, Warning, TEXT("FoundFloor"));
+					Floors.Add(SceneComponent);
+				}
+			}
+		}
+	}
+
+	UBlueprintGeneratedClass* ChildBluepinrtClass = Cast<UBlueprintGeneratedClass>(SpawningChunkClass);
+	const TArray<USCS_Node*>& ChildActorBlueprintNodes = ChildBluepinrtClass->SimpleConstructionScript->GetAllNodes();
+	UE_LOG(LogTemp, Warning, TEXT("Trying to get floors from child class: %s"), *SpawningChunkClass->GetFullName());
+	
+	for (USCS_Node* Node : ChildActorBlueprintNodes)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Checnkin Node class: %s"), *Node->ComponentClass->GetFullName());
+		if (Node->ComponentClass == UStaticMeshComponent::StaticClass())
+		{
+			//Node->GetActualComponentTemplate()
+			//Node ->get
+			UE_LOG(LogTemp, Warning, TEXT("FoundStaticMeshComponent"));
+			USceneComponent* SceneComponent = Cast<USceneComponent>(Node->ComponentTemplate);
+			if (SceneComponent)
+			{
+				if (SceneComponent->ComponentHasTag(FloorTag))
+				{
+					UE_LOG(LogTemp, Warning, TEXT("FoundFloor"));
 					Floors.Add(SceneComponent);
 				}				
 			}
 		}
 	}
 
-	//ADoungeonChunkBase* ChunkCDO = SpawningChunkClass.GetDefaultObject();
-	
+	//Uncommnent
 	TArray<USceneComponent*> AvailableExits;
-
-	UWorld* World = GetWorld();
-
-	
-	/*for (auto ChildComponent : ChunkCDO->GetComponentsByTag(USceneComponent::StaticClass(), FloorTag))
-	{
-		//ChildComponent->IsA<USceneComponent>();
-		USceneComponent* SceneComponent = Cast<USceneComponent>(ChildComponent);
-		if (SceneComponent)
-		{
-			//UE_LOG(LogTemp, Warning, TEXT("Added Floor: %s"), *SceneComponent->GetFullName());
-			Floors.Add(SceneComponent);
-		}
-		else
-		{
-			UE_LOG(LogTemp, Warning, TEXT("Component is not a USceneComponent: %s"), *SceneComponent->GetClass()->GetFullName());
-		}
-	}*/
+	UWorld* World = GetWorld();	
 	UE_LOG(LogTemp, Warning, TEXT("Floors amount: %d"), Floors.Num());
-	//DEBUG
-	/*for (auto Floor : Floors)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Floor: %s"), *Floor->GetFullName());
-	}*/
 
 	for (auto Exit : ValidExits)
 	{
@@ -138,15 +135,9 @@ bool ADoungeonChunkBase::TryGetSpawnTransformForChunk(TSubclassOf<ADoungeonChunk
 			int32 ExitIndex = FMath::RandRange(0, AvailableExits.Num() - 1);
 			OutTransform = AvailableExits[ExitIndex]->GetComponentTransform();
 		}
-
 		OutTransform = AvailableExits[0]->GetComponentTransform();
 		return true;
 	}
-	
-	/*if (!ValidExits.IsValidIndex(ValidExitIndex)) { return false; }
-	OutTransform = ValidExits[ValidExitIndex]->GetComponentTransform();
-	return true;*/
-	//UE_LOG(LogTemp, Warning, TEXT("AvailableExits.Num() <= 0"));
 	return false;
 }
 
