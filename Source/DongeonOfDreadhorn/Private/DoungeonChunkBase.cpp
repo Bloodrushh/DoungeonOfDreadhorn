@@ -45,53 +45,7 @@ bool ADoungeonChunkBase::TryGetSpawnTransformForChunk(TSubclassOf<ADoungeonChunk
 {
 	UpdateValidExits();	
 	TArray<USceneComponent*> Floors;
-	UBlueprintGeneratedClass* ParentBluepinrtClass = Cast<UBlueprintGeneratedClass>(SpawningChunkClass->GetSuperClass());
-	const TArray<USCS_Node*>& ParentActorBlueprintNodes = ParentBluepinrtClass->SimpleConstructionScript->GetAllNodes();
-	UE_LOG(LogTemp, Warning, TEXT("Trying to get floors from parent class: %s"), *SpawningChunkClass->GetFullName());
-
-	for (USCS_Node* Node : ParentActorBlueprintNodes)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Checnkin Node class: %s"), *Node->ComponentClass->GetFullName());
-		if (Node->ComponentClass == UStaticMeshComponent::StaticClass())
-		{
-			UE_LOG(LogTemp, Warning, TEXT("FoundStaticMeshComponent"));
-			USceneComponent* SceneComponent = Cast<USceneComponent>(Node->ComponentTemplate);
-			if (SceneComponent)
-			{
-				if (SceneComponent->ComponentHasTag(FloorTag))
-				{
-					UE_LOG(LogTemp, Warning, TEXT("FoundFloor"));
-					Floors.Add(SceneComponent);
-				}
-			}
-		}
-	}
-
-	UBlueprintGeneratedClass* ChildBluepinrtClass = Cast<UBlueprintGeneratedClass>(SpawningChunkClass);
-	const TArray<USCS_Node*>& ChildActorBlueprintNodes = ChildBluepinrtClass->SimpleConstructionScript->GetAllNodes();
-	UE_LOG(LogTemp, Warning, TEXT("Trying to get floors from child class: %s"), *SpawningChunkClass->GetFullName());
-	
-	for (USCS_Node* Node : ChildActorBlueprintNodes)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Checnkin Node class: %s"), *Node->ComponentClass->GetFullName());
-		if (Node->ComponentClass == UStaticMeshComponent::StaticClass())
-		{
-			//Node->GetActualComponentTemplate()
-			//Node ->get
-			UE_LOG(LogTemp, Warning, TEXT("FoundStaticMeshComponent"));
-			USceneComponent* SceneComponent = Cast<USceneComponent>(Node->ComponentTemplate);
-			if (SceneComponent)
-			{
-				if (SceneComponent->ComponentHasTag(FloorTag))
-				{
-					UE_LOG(LogTemp, Warning, TEXT("FoundFloor"));
-					Floors.Add(SceneComponent);
-				}				
-			}
-		}
-	}
-
-	//Uncommnent
+	GetFloorsFromChunkClass(SpawningChunkClass, Floors);
 	TArray<USceneComponent*> AvailableExits;
 	UWorld* World = GetWorld();	
 	UE_LOG(LogTemp, Warning, TEXT("Floors amount: %d"), Floors.Num());
@@ -207,6 +161,47 @@ void ADoungeonChunkBase::GetDeadExits(TArray<USceneComponent*>& OutExits)
 		}			
 		//DrawDebugLine(GetWorld(), TraceStart, TraceEnd, FColor::Blue, false, 55.0f, 0, 1);
 	}
+}
+
+void ADoungeonChunkBase::GetFloorsFromChunkClass(TSubclassOf<ADoungeonChunkBase> ChunkClass, TArray<USceneComponent*>& OutFloors)
+{
+	UBlueprintGeneratedClass* BluepinrtClass = Cast<UBlueprintGeneratedClass>(ChunkClass);
+	do
+	{
+		if (!BluepinrtClass)
+		{
+			return;
+		}
+		else
+		{
+			UE_LOG(LogTemp, Warning, TEXT("BluepinrtClass is valid: %s"), *BluepinrtClass->GetFullName());
+		}
+
+		const TArray<USCS_Node*>& ActorBlueprintNodes = BluepinrtClass->SimpleConstructionScript->GetAllNodes();
+		UE_LOG(LogTemp, Warning, TEXT("Trying to get floors from class: %s"), *BluepinrtClass->GetFullName());
+
+		for (USCS_Node* Node : ActorBlueprintNodes)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Checnkin Node class: %s"), *Node->ComponentClass->GetFullName());
+			if (Node->ComponentClass == UStaticMeshComponent::StaticClass())
+			{
+				UE_LOG(LogTemp, Warning, TEXT("FoundStaticMeshComponent"));
+				USceneComponent* SceneComponent = Cast<USceneComponent>(Node->ComponentTemplate);
+				if (SceneComponent)
+				{
+					if (SceneComponent->ComponentHasTag(FloorTag))
+					{
+						UE_LOG(LogTemp, Warning, TEXT("FoundFloor"));
+						OutFloors.Add(SceneComponent);
+					}
+				}
+			}
+		}
+
+		BluepinrtClass = Cast<UBlueprintGeneratedClass>(BluepinrtClass->GetSuperClass());
+		UE_LOG(LogTemp, Warning, TEXT("New BluepinrtClass: %s"), *BluepinrtClass->GetFullName());
+		
+	} while (BluepinrtClass != AActor::StaticClass() && BluepinrtClass);	
 }
 
 

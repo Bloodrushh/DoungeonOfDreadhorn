@@ -53,4 +53,7 @@ public:
 
 	UFUNCTION()
 		void GetDeadExits(TArray<USceneComponent*>& OutExits);
+
+	UFUNCTION()
+		void GetFloorsFromChunkClass(TSubclassOf<ADoungeonChunkBase> ChunkClass, TArray<USceneComponent*>& OutFloors);
 };
