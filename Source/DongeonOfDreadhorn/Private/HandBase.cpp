@@ -15,6 +15,7 @@ AHandBase::AHandBase()
 	MotionController = CreateDefaultSubobject<UMotionControllerComponent>(TEXT("MotionControllerComponent"));	
 	Mesh = CreateOptionalDefaultSubobject<USkeletalMeshComponent>(TEXT("Mesh"));
 	MotionController->SetupAttachment(RootComponent);
+	//MotionController->SetAutoActivate(false);
 	Mesh->SetupAttachment(MotionController);
 }
 

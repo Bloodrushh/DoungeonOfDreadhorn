@@ -1,7 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #pragma once
-
+#include "DungeonChunkBoardBase.h"
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "DoungeonChunkBase.generated.h"
@@ -56,4 +56,18 @@ public:
 
 	UFUNCTION()
 		void GetFloorsFromChunkClass(TSubclassOf<ADoungeonChunkBase> ChunkClass, TArray<USceneComponent*>& OutFloors);
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+		TArray<UStaticMeshComponent*> Floors;
+
+	UFUNCTION(BlueprintCallable)
+		void OnVisited();
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+		TArray<ADungeonChunkBoardBase*> BoardChunks;
+
+	void AddBoardChunk(ADungeonChunkBoardBase* NewBoardChunk);
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+		bool bVisited = false;
 };

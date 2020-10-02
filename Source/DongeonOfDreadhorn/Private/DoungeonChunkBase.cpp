@@ -19,6 +19,22 @@ void ADoungeonChunkBase::BeginPlay()
 	FindAndChachePossibleExits();
 	UpdateValidExits();
 	//UE_LOG(LogTemp, Warning, TEXT("BeginPlay"));
+	//GetComponents<UStaticMeshComponent>()
+
+	for (auto ActorComponent : GetComponentsByClass(UStaticMeshComponent::StaticClass()))
+	{
+		if (ActorComponent->ComponentHasTag(FloorTag))
+		{			
+			UStaticMeshComponent* StaticMesh = Cast<UStaticMeshComponent>(ActorComponent);
+			if (StaticMesh)
+			{
+				if (StaticMesh->IsCollisionEnabled())
+				{
+					Floors.Add(StaticMesh);
+				}
+			}
+		}
+	}
 }
 
 void ADoungeonChunkBase::UpdateValidExits()
@@ -44,8 +60,8 @@ void ADoungeonChunkBase::UpdateValidExits()
 bool ADoungeonChunkBase::TryGetSpawnTransformForChunk(TSubclassOf<ADoungeonChunkBase> SpawningChunkClass, FTransform & OutTransform)
 {
 	UpdateValidExits();	
-	TArray<USceneComponent*> Floors;
-	GetFloorsFromChunkClass(SpawningChunkClass, Floors);
+	TArray<USceneComponent*> FloorsComponents;
+	GetFloorsFromChunkClass(SpawningChunkClass, FloorsComponents);
 	TArray<USceneComponent*> AvailableExits;
 	UWorld* World = GetWorld();	
 	UE_LOG(LogTemp, Warning, TEXT("Floors amount: %d"), Floors.Num());
@@ -55,10 +71,10 @@ bool ADoungeonChunkBase::TryGetSpawnTransformForChunk(TSubclassOf<ADoungeonChunk
 		bool bFoundAvailabeExit = false;
 		FTransform ExitTransform = Exit->GetComponentTransform();
 		
-		for (auto Floor : Floors)
+		for (auto FloorComponent : FloorsComponents)
 		{
-			UE_LOG(LogTemp, Warning, TEXT("Class: %s, Checking Floor: %s"), *SpawningChunkClass->GetFullName(), *Floor->GetFullName());
-			FVector End = ExitTransform.TransformPosition(Floor->GetRelativeLocation());
+			UE_LOG(LogTemp, Warning, TEXT("Class: %s, Checking Floor: %s"), *SpawningChunkClass->GetFullName(), *FloorComponent->GetFullName());
+			FVector End = ExitTransform.TransformPosition(FloorComponent->GetRelativeLocation());
 			FVector Start = End + FVector(0.0f, 0.0f, 250);
 			FHitResult HitResult;
 
@@ -202,6 +218,20 @@ void ADoungeonChunkBase::GetFloorsFromChunkClass(TSubclassOf<ADoungeonChunkBase>
 		UE_LOG(LogTemp, Warning, TEXT("New BluepinrtClass: %s"), *BluepinrtClass->GetFullName());
 		
 	} while (BluepinrtClass != AActor::StaticClass() && BluepinrtClass);	
+}
+
+void ADoungeonChunkBase::OnVisited()
+{
+	bVisited = true;
+	for (auto Chunk : BoardChunks)
+	{
+		Chunk->OnVisited();
+	}
+}
+
+void ADoungeonChunkBase::AddBoardChunk(ADungeonChunkBoardBase * NewBoardChunk)
+{
+	BoardChunks.Add(NewBoardChunk);
 }
 
 
