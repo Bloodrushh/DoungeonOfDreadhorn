@@ -38,8 +38,13 @@ public:
 		TSubclassOf<ABoardPawnHand> HandClass;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-		AHandBase* LeftHand;
+		ABoardPawnHand* LeftHand;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-		AHandBase* RightHand;
+		ABoardPawnHand* RightHand;
+	
+	void GrabRight();
+	void DropRight();
+	void GrabLeft();
+	void DropLeft();
 };

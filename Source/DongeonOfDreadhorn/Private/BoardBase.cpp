@@ -84,8 +84,8 @@ void ABoardBase::OnMapGenerated()
 	Table->GetBounce(MaxX, MinX, MaxY, MinY);
 	//UE_LOG(LogTemp, Warning, TEXT("MaxX: %f, MinX: %f, MaxY: %f, MinY: %f"), MaxX, MinX, MaxY, MinY);
 
-	float OffsetX;
-	float OffsetY;
+	float OffsetX = 0.0f;
+	float OffsetY = 0.0f;
 	//UE_LOG(LogTemp, Warning, TEXT("BoardChunks.NUM(): %d"), BoardChunks.Num());
 
 	for (auto Chunk : BoardChunks)

@@ -30,12 +30,12 @@ void ABoardPawn::BeginPlay()
 		FAttachmentTransformRules AttachmentRuesl = FAttachmentTransformRules(EAttachmentRule::SnapToTarget, EAttachmentRule::SnapToTarget, EAttachmentRule::KeepWorld, false);
 		FTransform SpawnTransform = GetActorTransform();
 
-		RightHand = GetWorld()->SpawnActorDeferred<AHandBase>(HandClass, SpawnTransform, this, this, ESpawnActorCollisionHandlingMethod::AlwaysSpawn);
+		RightHand = GetWorld()->SpawnActorDeferred<ABoardPawnHand>(HandClass, SpawnTransform, this, this, ESpawnActorCollisionHandlingMethod::AlwaysSpawn);
 		RightHand->Hand = EControllerHand::Right;		
 		UGameplayStatics::FinishSpawningActor(RightHand, SpawnTransform);
 		RightHand->AttachToComponent(VrOrigin, AttachmentRuesl);
 
-		LeftHand = GetWorld()->SpawnActorDeferred<AHandBase>(HandClass, SpawnTransform, this, this, ESpawnActorCollisionHandlingMethod::AlwaysSpawn);
+		LeftHand = GetWorld()->SpawnActorDeferred<ABoardPawnHand>(HandClass, SpawnTransform, this, this, ESpawnActorCollisionHandlingMethod::AlwaysSpawn);
 		LeftHand->Hand = EControllerHand::Left;		
 		UGameplayStatics::FinishSpawningActor(LeftHand, SpawnTransform);
 		LeftHand->AttachToComponent(VrOrigin, AttachmentRuesl);
@@ -53,6 +53,28 @@ void ABoardPawn::Tick(float DeltaTime)
 void ABoardPawn::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
-
+	InputComponent->BindAction("GrabLeft", IE_Pressed, this, &ABoardPawn::GrabLeft);
+	InputComponent->BindAction("GrabLeft", IE_Released, this, &ABoardPawn::DropLeft);
+	InputComponent->BindAction("GrabRight", IE_Pressed, this, &ABoardPawn::GrabRight);
+	InputComponent->BindAction("GrabRight", IE_Released, this, &ABoardPawn::DropRight);
 }
 
+void ABoardPawn::GrabRight()
+{
+	RightHand->Grab();
+}
+
+void ABoardPawn::DropRight()
+{
+	RightHand->Drop();
+}
+
+void ABoardPawn::GrabLeft()
+{
+	LeftHand->Grab();
+}
+
+void ABoardPawn::DropLeft()
+{
+	LeftHand->Drop();
+}
