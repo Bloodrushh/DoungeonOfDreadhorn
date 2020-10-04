@@ -111,6 +111,11 @@ void ADungeonGeneratorBase::SpawnChunk()
 			{
 				Chunk->PlaceDeadEnds();
 			}
+
+			if (Board)
+			{
+				Board->OnDungeonGenerated(SpawnedChunks);
+			}
 			return;
 		}
 		else

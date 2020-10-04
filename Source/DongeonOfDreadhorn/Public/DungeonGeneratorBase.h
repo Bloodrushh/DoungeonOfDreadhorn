@@ -1,7 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #pragma once
-
+#include "BoardBase.h"
 #include "DoungeonChunkBase.h"
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
@@ -47,4 +47,8 @@ public:
 		int32 ChunksToSpawn = 30;
 
 	int32 ChunksAmount;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		ABoardBase* Board;
+
 };
