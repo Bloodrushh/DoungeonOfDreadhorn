@@ -47,4 +47,7 @@ public:
 	void DropRight();
 	void GrabLeft();
 	void DropLeft();
+
+	void DisableControllers();
+	void EnableControllers();
 };

@@ -25,3 +25,13 @@ void ADungeonChunkBoardBase::Tick(float DeltaTime)
 
 }
 
+
+void ADungeonChunkBoardBase::OnConstruction(const FTransform & Transform)
+{
+	Super::OnConstruction(Transform);
+
+	if (bVisited)
+	{
+		OnVisited();
+	}
+}

@@ -2,6 +2,7 @@
 
 
 #include "TableBase.h"
+#include "Kismet/GamePlayStatics.h"
 
 // Sets default values
 ATableBase::ATableBase()
@@ -16,6 +17,7 @@ void ATableBase::BeginPlay()
 {
 	Super::BeginPlay();
 	
+	DODPlayerController = Cast<ADODPlayerController>(UGameplayStatics::GetPlayerController(this, 0));
 }
 
 // Called every frame
@@ -32,5 +34,57 @@ void ATableBase::GetBounce(float & OutMaxX, float & OutMinX, float & OutMaxY, fl
 	OutMinX = Location.X - Height;
 	OutMaxY = Location.Y + Width;
 	OutMinY = Location.Y - Width;
+}
+
+void ATableBase::StartEvent(EEventType Event, EAttributeType Attribute, const FOnEvenProcessed Callback)
+{
+	if (Dice)
+	{
+		//FOnValueDetermined::CreateUObject(this, &ATableBase::OnValueDetermined);
+		Dice->Reset();
+		Dice->OnValueDetermined.BindUObject(this, &ATableBase::OnValueDetermined, Event, Attribute, Callback);
+
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Dice is invalid"));
+	}
+	/*bool Result = false;
+	switch (Event)
+	{
+	case EEventType::Trap:
+		break;
+	case EEventType::Fight:
+		Result = true;
+		break;
+	case EEventType::Chest:
+		break;
+	default:
+		break;
+	}
+
+	
+	Callback.ExecuteIfBound(Result);*/	
+}
+
+void ATableBase::OnValueDetermined(int32 Value, EEventType Event, EAttributeType Attribute, const FOnEvenProcessed Callback)
+{
+	UE_LOG(LogTemp, Warning, TEXT("DeterminedValue: %d"), Value);
+
+	bool Result = false;
+	switch (Event)
+	{
+	case EEventType::Trap:
+		break;
+	case EEventType::Fight:
+		Result = Attribute == EAttributeType::Strength && Value >= 3;
+		break;
+	case EEventType::Chest:
+		break;
+	default:
+		break;
+	}
+	Callback.ExecuteIfBound(Result);
+	// Вот сюда юы мне ссылка на callback
 }
 

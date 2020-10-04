@@ -5,6 +5,8 @@
 #include "Camera/CameraComponent.h"
 #include "HeadMountedDisplayFunctionLibrary.h"
 #include "Kismet/GameplayStatics.h"
+#include "DODPlayerController.h"
+
 // Sets default values
 ABoardPawn::ABoardPawn()
 {
@@ -22,6 +24,12 @@ ABoardPawn::ABoardPawn()
 void ABoardPawn::BeginPlay()
 {
 	Super::BeginPlay();
+
+	ADODPlayerController* DODPlayerController = Cast<ADODPlayerController>(UGameplayStatics::GetPlayerController(this, 0));
+	if (DODPlayerController)
+	{
+		DODPlayerController->SetBoardPawnReference(this);
+	}
 	
 	UHeadMountedDisplayFunctionLibrary::SetTrackingOrigin(EHMDTrackingOrigin::Floor);
 
@@ -77,4 +85,16 @@ void ABoardPawn::GrabLeft()
 void ABoardPawn::DropLeft()
 {
 	LeftHand->Drop();
+}
+
+void ABoardPawn::DisableControllers()
+{
+	RightHand->MotionController->Deactivate();
+	LeftHand->MotionController->Deactivate();
+}
+
+void ABoardPawn::EnableControllers()
+{
+	RightHand->MotionController->Activate();
+	LeftHand->MotionController->Activate();
 }

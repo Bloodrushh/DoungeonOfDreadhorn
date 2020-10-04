@@ -108,4 +108,7 @@ public:
 
 	UPROPERTY(EditDefaultsOnly)
 		int32 MaxFootPrints;
+
+	void DisableControllers();
+	void EnableControllers();
 };

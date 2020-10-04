@@ -55,7 +55,7 @@ bool ABoardPawnHand::GetNearestActor(AActor*& OutActor)
 		}
 	}
 	OutActor = NearsActor;
-	return NearsActor;
+	return NearsActor != nullptr;
 }
 
 void ABoardPawnHand::Drop()

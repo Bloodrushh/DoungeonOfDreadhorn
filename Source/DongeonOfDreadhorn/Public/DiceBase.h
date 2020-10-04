@@ -8,6 +8,8 @@
 #include "GameFramework/Actor.h"
 #include "DiceBase.generated.h"
 
+DECLARE_DELEGATE_OneParam(FOnValueDetermined, int32 /*Value*/);
+
 UCLASS()
 class DONGEONOFDREADHORN_API ADiceBase : public AActor, public IPickupableInterface
 {
@@ -38,4 +40,12 @@ public:
 	void DetermineValue(UDiceFaceComponent*& OutDiceFace);
 
 	TArray<UDiceFaceComponent*> DiceFaces;
+
+	void Reset();
+
+	FOnValueDetermined OnValueDetermined;
+
+	FTransform InitialTransform;
+
+	
 };

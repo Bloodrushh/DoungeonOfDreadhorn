@@ -11,7 +11,7 @@ ADiceBase::ADiceBase() //(const FObjectInitializer& ObjectInitializer): Super(Ob
 	
 	Mesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Mesh"));	
 	Mesh->SetCollisionProfileName(UCollisionProfile::PhysicsActor_ProfileName);
-	Mesh->SetSimulatePhysics(true);
+	Mesh->SetSimulatePhysics(false);
 	RootComponent = Mesh;
 }
 
@@ -19,6 +19,10 @@ ADiceBase::ADiceBase() //(const FObjectInitializer& ObjectInitializer): Super(Ob
 void ADiceBase::BeginPlay()
 {
 	Super::BeginPlay();
+
+	InitialTransform = GetActorTransform();
+	
+	Reset();
 
 	TArray<UActorComponent*> ActorComponents;
 	GetComponents(ActorComponents);
@@ -49,16 +53,16 @@ void ADiceBase::Tick(float DeltaTime)
 			UDiceFaceComponent* Best;
 			DetermineValue(Best);
 			bValueDetermined = true;
-			UE_LOG(LogTemp, Warning, TEXT("DeterminedValue: %d"), Best->FaceValue);
-			
+			Mesh->SetSimulatePhysics(false);
+			Mesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+			OnValueDetermined.ExecuteIfBound(Best->FaceValue);
+			//UE_LOG(LogTemp, Warning, TEXT("DeterminedValue: %d"), Best->FaceValue);			
 		}
 	}
-
 }
 
 void ADiceBase::OnPickup(USceneComponent * AttachTo)
 {
-	Mesh->SetSimulatePhysics(false);
 	FAttachmentTransformRules AttachmentRules = FAttachmentTransformRules(EAttachmentRule::KeepWorld, EAttachmentRule::KeepWorld, EAttachmentRule::KeepWorld, false);
 	AttachToComponent(AttachTo, AttachmentRules);
 }
@@ -69,7 +73,6 @@ void ADiceBase::OnDrop()
 	FDetachmentTransformRules DetachmentRules = FDetachmentTransformRules(EDetachmentRule::KeepWorld, false);
 	DetachFromActor(DetachmentRules);
 	bThrown = true;
-	bValueDetermined = false;
 }
 
 void ADiceBase::DetermineValue(UDiceFaceComponent*& OutDiceFace)
@@ -92,5 +95,16 @@ void ADiceBase::DetermineValue(UDiceFaceComponent*& OutDiceFace)
 		}
 	}
 	OutDiceFace = Best;
+}
+
+void ADiceBase::Reset()
+{
+	bThrown = false;
+	bValueDetermined = false;
+	Mesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+	Mesh->SetSimulatePhysics(false);
+	//SetActorLocation(InitialLocation,false,(FHitResult*)nullptr, ETeleportType::ResetPhysics);
+	SetActorTransform(InitialTransform);
+	UE_LOG(LogTemp, Warning, TEXT("DiceReset"));
 }
 

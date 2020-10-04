@@ -7,6 +7,7 @@
 #include "HeadMountedDisplayFunctionLibrary.h"
 #include "HandBase.h"
 #include "FootPrintDecal.h"
+#include "DODPlayerController.h"
 
 // Sets default values
 APlayerPawn::APlayerPawn()
@@ -27,8 +28,14 @@ APlayerPawn::APlayerPawn()
 void APlayerPawn::BeginPlay()
 {
 	Super::BeginPlay();
-	UHeadMountedDisplayFunctionLibrary::SetTrackingOrigin(EHMDTrackingOrigin::Floor);
 
+	ADODPlayerController* DODPlayerController = Cast<ADODPlayerController>(UGameplayStatics::GetPlayerController(this, 0));
+	if (DODPlayerController)
+	{
+		DODPlayerController->SetPlayerPawnReference(this);
+	}
+
+	UHeadMountedDisplayFunctionLibrary::SetTrackingOrigin(EHMDTrackingOrigin::Floor);
 
 	if (HandClass)
 	{
@@ -220,9 +227,17 @@ void APlayerPawn::SpawnFootPrint()
 			}
 			FootPrints.Add(SpawnedFoorPrint);
 		}
-	}
-
-	
+	}	
 }
 
+void APlayerPawn::DisableControllers()
+{
+	RightHand->MotionController->Deactivate();
+	LeftHand->MotionController->Deactivate();
+}
 
+void APlayerPawn::EnableControllers()
+{
+	RightHand->MotionController->Activate();
+	LeftHand->MotionController->Activate();
+}

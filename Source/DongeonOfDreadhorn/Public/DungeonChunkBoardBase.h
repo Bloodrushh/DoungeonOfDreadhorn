@@ -25,5 +25,9 @@ public:
 
 	UFUNCTION(BlueprintImplementableEvent)
 		void OnVisited();
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (ExposeOnSpawn = true))
+	bool bVisited = false;
 
+	virtual void OnConstruction(const FTransform& Transform) override;
 };

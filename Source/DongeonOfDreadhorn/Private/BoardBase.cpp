@@ -3,6 +3,7 @@
 
 #include "BoardBase.h"
 #include "Engine/World.h"
+#include "Kismet/GameplayStatics.h"
 // Sets default values
 ABoardBase::ABoardBase()
 {
@@ -57,9 +58,14 @@ void ABoardBase::OnDungeonGenerated(TArray<ADoungeonChunkBase*> Chunks)
 				FVector DeltaVector = (Floor->GetComponentLocation() - DungeonChunkStartLocation) / 200;
 				FVector Location = GetActorLocation() + DeltaVector;
 				FRotator Rotation = Floor->GetComponentRotation();
+				FTransform SpawnTransform = FTransform(Rotation, Location);
 
-				FActorSpawnParameters SpawnParameters;
-				ADungeonChunkBoardBase* SpawnedChunk = World->SpawnActor<ADungeonChunkBoardBase>(DungeonChunkBoardClass, Location, Rotation, SpawnParameters);
+				//FActorSpawnParameters SpawnParameters;
+				//ADungeonChunkBoardBase* SpawnedChunk = World->SpawnActor<ADungeonChunkBoardBase>(DungeonChunkBoardClass, Location, Rotation, SpawnParameters);
+				
+				ADungeonChunkBoardBase* DeferredChunk = World->SpawnActorDeferred<ADungeonChunkBoardBase>(DungeonChunkBoardClass, SpawnTransform);
+				DeferredChunk->bVisited = Chunk->bVisited;
+				ADungeonChunkBoardBase* SpawnedChunk = Cast<ADungeonChunkBoardBase>(UGameplayStatics::FinishSpawningActor(DeferredChunk, SpawnTransform));
 				if (SpawnedChunk)
 				{
 					BoardChunks.Add(SpawnedChunk);
