@@ -39,11 +39,41 @@ public:
 		ADiceBase* Dice;
 
 	UFUNCTION(BlueprintCallable)
-	void StartEvent(EEventType Event, EAttributeType Attribute, const FOnEvenProcessed Callback);
+	void StartEvent(FEventInfo EventInfo, const FOnEvenProcessed Callback);
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 		ADODPlayerController* DODPlayerController;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+		APlayerPawn* PlayerPawn;
+
 	UFUNCTION()
-	void OnValueDetermined(int32 Value, EEventType Event, EAttributeType Attribute, const FOnEvenProcessed Callback);
+	void OnValueDetermined(int32 Value, FEventInfo EventInfo, const FOnEvenProcessed Callback);
+
+	UPROPERTY(EditDefaultsOnly)
+		UDataTable* CharactersDT;
+
+	UPROPERTY(EditDefaultsOnly)
+		UDataTable* CharactersNamesDT;
+
+	UPROPERTY(EditDefaultsOnly)
+		FName HumanRowName;
+
+	UPROPERTY(EditDefaultsOnly)
+		FName ElvenRowName;
+
+	UPROPERTY(EditDefaultsOnly)
+		FName DwarvenRowName;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+		TArray<FCharacterInfo> Characters;
+
+	void GenerateCharactersPool();
+
+	UPROPERTY(EditDefaultsOnly)
+		int32 CharactersToGenerate = 5;
+
+	bool GetRandomName(ERace Race, EGender Gender, FText& OutFirstName, FText& OutSecondName);
+	
 };
+

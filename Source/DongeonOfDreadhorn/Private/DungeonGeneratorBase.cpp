@@ -107,16 +107,13 @@ void ADungeonGeneratorBase::SpawnChunk()
 		{
 			UE_LOG(LogTemp, Warning, TEXT("Exit chunk spawned. Placing DeadEnds."));
 
-			for (auto Chunk : SpawnedChunks)
-			{
-				Chunk->PlaceDeadEnds();
-			}
-
+			PlaceSecretRooms();
+			PlaceDeadEnds();
+			PlaceEventTriggers();
 			if (Board)
 			{
 				Board->OnDungeonGenerated(SpawnedChunks);
 			}
-			return;
 		}
 		else
 		{
@@ -135,6 +132,76 @@ void ADungeonGeneratorBase::SpawnChunk()
 		}		
 		UE_LOG(LogTemp, Warning, TEXT("Failed to spawn chunk class: %s"), *ChunkClass.Get()->GetName());
 	}	
+}
+
+void ADungeonGeneratorBase::PlaceDeadEnds()
+{
+	for (auto Chunk : SpawnedChunks)
+	{
+		Chunk->PlaceDeadEnds();
+	}
+}
+
+void ADungeonGeneratorBase::PlaceEventTriggers()
+{
+	int32 EventTriggersAmount = 0;
+	int32 IterationsCount = 0;
+	TArray <ADoungeonChunkBase*> ValidChunks = SpawnedChunks;
+	ValidChunks.RemoveAt(0);
+	ValidChunks.RemoveAt(ValidChunks.Num() - 1);
+
+	while(EventTriggersAmount < EventTriggersToSpawn && IterationsCount < SpawnedChunks.Num()-3)
+	{
+		int32 ChunkIndex = FMath::RandRange(0, ValidChunks.Num() - 1);
+		if (ValidChunks[ChunkIndex]->GetCanSpawnEventTriggers())
+		{
+			if (ValidChunks[ChunkIndex]->SpawnEventTrigger())
+			{
+				EventTriggersAmount++;
+			}
+			else
+			{
+				UE_LOG(LogTemp, Warning, TEXT("Chunk: %s FAILED to spawn event triggers"), *ValidChunks[ChunkIndex]->GetHumanReadableName());
+			}
+		}
+		else
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Chunk: %s is not able to spawn event triggers"), *ValidChunks[ChunkIndex]->GetHumanReadableName());
+		}
+		ValidChunks.RemoveAt(ChunkIndex);
+		IterationsCount++;
+	}
+}
+
+void ADungeonGeneratorBase::PlaceSecretRooms()
+{
+	/*int32 EventTriggersAmount = 0;
+	int32 IterationsCount = 0;
+	TArray <ADoungeonChunkBase*> ValidChunks = SpawnedChunks;
+	ValidChunks.RemoveAt(0);
+	ValidChunks.RemoveAt(ValidChunks.Num() - 1);
+
+	while (EventTriggersAmount < EventTriggersToSpawn && IterationsCount < SpawnedChunks.Num() - 3)
+	{
+		int32 ChunkIndex = FMath::RandRange(0, ValidChunks.Num() - 1);
+		if (ValidChunks[ChunkIndex]->GetCanSpawnEventTriggers())
+		{
+			if (ValidChunks[ChunkIndex]->SpawnEventTrigger())
+			{
+				EventTriggersAmount++;
+			}
+			else
+			{
+				UE_LOG(LogTemp, Warning, TEXT("Chunk: %s FAILED to spawn event triggers"), *ValidChunks[ChunkIndex]->GetHumanReadableName());
+			}
+		}
+		else
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Chunk: %s is not able to spawn event triggers"), *ValidChunks[ChunkIndex]->GetHumanReadableName());
+		}
+		ValidChunks.RemoveAt(ChunkIndex);
+		IterationsCount++;
+	}*/
 }
 
 

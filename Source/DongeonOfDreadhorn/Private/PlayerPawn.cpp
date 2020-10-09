@@ -22,13 +22,15 @@ APlayerPawn::APlayerPawn()
 	Camera->SetupAttachment(VrOrigin);
 
 	AutoPossessPlayer = EAutoReceiveInput::Player0;
+
+	
 }
 
 // Called when the game starts or when spawned
 void APlayerPawn::BeginPlay()
 {
 	Super::BeginPlay();
-
+	
 	ADODPlayerController* DODPlayerController = Cast<ADODPlayerController>(UGameplayStatics::GetPlayerController(this, 0));
 	if (DODPlayerController)
 	{
@@ -51,7 +53,7 @@ void APlayerPawn::BeginPlay()
 		LeftHand->Hand = EControllerHand::Left;
 		UGameplayStatics::FinishSpawningActor(LeftHand, SpawnTransform);
 		LeftHand->AttachToComponent(VrOrigin, AttachmentRuesl);
-	}	
+	}
 }
 
 // Called every frame
@@ -240,4 +242,29 @@ void APlayerPawn::EnableControllers()
 {
 	RightHand->MotionController->Activate();
 	LeftHand->MotionController->Activate();
+}
+
+void APlayerPawn::AddCharacterToParty(FCharacterInfo InCharacter, int32& OutIndex)
+{
+	OutIndex = Characters.Add(InCharacter);
+	UE_LOG(LogTemp, Warning, TEXT("@DONKEY@ Successfully added character: FISRTNAME=%s , SECONDNAME=%s to party. Index: %d"), *InCharacter.GeneralInfo.FirstName.ToString(), *InCharacter.GeneralInfo.SecondName.ToString(),  OutIndex);
+}
+
+bool APlayerPawn::RemoveCharacterFromParty(int32 InIndex)
+{
+	if(Characters.IsValidIndex(InIndex))
+	{
+		Characters.RemoveAt(InIndex);
+		return true;
+	}	
+	return false;
+}
+
+void APlayerPawn::GetAttributeValue(EAttribute InAttribute, int32& OutValue)
+{
+	int32 LocalValue = 0;
+	for(auto Character : Characters)
+	{
+		OutValue += *Character.AttributesInfo.Attributes.Find(InAttribute);
+	}
 }

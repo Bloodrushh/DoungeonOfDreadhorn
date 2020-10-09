@@ -41,6 +41,7 @@ public:
 
 	TArray<UDiceFaceComponent*> DiceFaces;
 
+	UFUNCTION(BlueprintCallable)
 	void Reset();
 
 	FOnValueDetermined OnValueDetermined;

@@ -51,4 +51,13 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		ABoardBase* Board;
 
+	UPROPERTY(EditDefaultsOnly)
+		int32 EventTriggersToSpawn = 10;
+
+	void PlaceDeadEnds();
+
+	void PlaceEventTriggers();
+
+	void PlaceSecretRooms();
+
 };

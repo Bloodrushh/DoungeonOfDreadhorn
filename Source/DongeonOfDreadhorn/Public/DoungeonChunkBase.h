@@ -1,6 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #pragma once
+#include "EventTriggerBase.h"
 #include "DungeonChunkBoardBase.h"
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
@@ -27,35 +28,42 @@ public:
 	UPROPERTY()
 		TArray<USceneComponent*> ValidExits;
 
+	UPROPERTY()
+		TArray<USceneComponent*> EnemySpawnPoints;
+
+	UPROPERTY()
+		TArray<USceneComponent*> ChestSpawnPoints;
+
 	UPROPERTY(EditDefaultsOnly)
 		TSubclassOf<ADoungeonChunkBase> DeadEndChunkClass;
-
-	UFUNCTION()
+	
 		void UpdateValidExits();
 
 	UFUNCTION(BlueprintCallable)
 		bool TryGetSpawnTransformForChunk(TSubclassOf<ADoungeonChunkBase> SpawningChunkClass, FTransform & OutTransform);
 
-	UFUNCTION()
 		void FindAndChachePossibleExits();
 
-	UPROPERTY()
+	UPROPERTY(EditDefaultsOnly)
 		FName ExitSnapPointTag = TEXT("ExitSnapPoint");
 
-	UPROPERTY()
+	UPROPERTY(EditDefaultsOnly)
 		FName FloorTag = TEXT("FloorSnapPoint");
+
+	UPROPERTY(EditDefaultsOnly)
+		FName ChestSpawnPointTag = TEXT("ChestSpawnPoint");
+
+	UPROPERTY(EditDefaultsOnly)
+		FName EnemySpawnPointTag = TEXT("EnemySpawnPoint");
 
 	UFUNCTION(BlueprintCallable)
 		void GetPossibleExits(TArray<USceneComponent*>& OutPossibleExits);
 
-	UFUNCTION()
-		void PlaceDeadEnds();
+	void PlaceDeadEnds();
 
-	UFUNCTION()
-		void GetDeadExits(TArray<USceneComponent*>& OutExits);
+	void GetDeadExits(TArray<USceneComponent*>& OutExits);
 
-	UFUNCTION()
-		void GetFloorsFromChunkClass(TSubclassOf<ADoungeonChunkBase> ChunkClass, TArray<USceneComponent*>& OutFloors);
+	void GetFloorsFromChunkClass(TSubclassOf<ADoungeonChunkBase> ChunkClass, TArray<USceneComponent*>& OutFloors);
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 		TArray<UStaticMeshComponent*> Floors;
@@ -70,4 +78,29 @@ public:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 		bool bVisited = false;
+
+	void FindAndCacheEnemySpawnPoints();
+
+	void FindAndCacheChestSpawnPoints();
+
+	void FindAndCacheFloors();
+
+	UPROPERTY(EditDefaultsOnly)
+		bool CanSpawnEventTriggers = false;
+
+	UPROPERTY(EditDefaultsOnly)
+		TArray<TSubclassOf<AEventTriggerBase>> EventTriggers;
+
+	bool GetCanSpawnEventTriggers();
+
+	bool SpawnEventTrigger();
+
+	UPROPERTY(EditDefaultsOnly)
+		TSubclassOf<ADoungeonChunkBase> ExitBlockerClass;
+	
+	TArray<ADoungeonChunkBase*> ExitBlockers;
+
+	void CloseExits();
+	
+	void OpenExits();
 };

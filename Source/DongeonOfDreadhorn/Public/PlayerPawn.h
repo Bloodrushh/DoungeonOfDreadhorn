@@ -1,9 +1,10 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #pragma once
-
+#include "ProjectTypes.h"
 #include "Camera/CameraComponent.h"
 #include "CoreMinimal.h"
+#include "Engine/DataTable.h"
 #include "GameFramework/Pawn.h"
 #include "PlayerPawn.generated.h"
 
@@ -110,5 +111,18 @@ public:
 		int32 MaxFootPrints;
 
 	void DisableControllers();
+	
 	void EnableControllers();
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+		TArray<FCharacterInfo> Characters;
+
+	UPROPERTY()
+		int32 ActiveCharacterIndex;
+
+	void AddCharacterToParty(FCharacterInfo InCharacter, int32& OutIndex);
+
+	bool RemoveCharacterFromParty(int32 InIndex);
+
+	void GetAttributeValue(EAttribute InAttribute, int32& OutValue);
 };

@@ -5,6 +5,7 @@
 #include "DrawDebugHelpers.h"
 #include "Engine/BlueprintGeneratedClass.h"
 #include "Engine/SCS_Node.h"
+#include "Kismet/GameplayStatics.h"
 // Sets default values
 ADoungeonChunkBase::ADoungeonChunkBase()
 {
@@ -20,21 +21,9 @@ void ADoungeonChunkBase::BeginPlay()
 	UpdateValidExits();
 	//UE_LOG(LogTemp, Warning, TEXT("BeginPlay"));
 	//GetComponents<UStaticMeshComponent>()
-
-	for (auto ActorComponent : GetComponentsByClass(UStaticMeshComponent::StaticClass()))
-	{
-		if (ActorComponent->ComponentHasTag(FloorTag))
-		{			
-			UStaticMeshComponent* StaticMesh = Cast<UStaticMeshComponent>(ActorComponent);
-			if (StaticMesh)
-			{
-				if (StaticMesh->IsCollisionEnabled())
-				{
-					Floors.Add(StaticMesh);
-				}
-			}
-		}
-	}
+	FindAndCacheFloors();
+	FindAndCacheChestSpawnPoints();
+	FindAndCacheEnemySpawnPoints();	
 }
 
 void ADoungeonChunkBase::UpdateValidExits()
@@ -139,9 +128,13 @@ void ADoungeonChunkBase::PlaceDeadEnds()
 	FActorSpawnParameters SpawnParams;
 	for (auto Exit : DeadExits)
 	{	
-		FTransform  SpawnTansform = Exit->GetComponentTransform();
+		FTransform  SpawnTransform = Exit->GetComponentTransform();
 		//UE_LOG(LogTemp, Warning, TEXT("Successfully found place for DeadEnd: x=%f, y=%f, z=%f"), SpawnTansform.GetLocation().X, SpawnTansform.GetLocation().Y, SpawnTansform.GetLocation().Z);
-		GetWorld()->SpawnActor<ADoungeonChunkBase>(DeadEndChunkClass, SpawnTansform, SpawnParams);		
+		ADoungeonChunkBase* DeadEnd = GetWorld()->SpawnActor<ADoungeonChunkBase>(DeadEndChunkClass, SpawnTransform, SpawnParams);
+		if(DeadEnd)
+		{
+			PossibleExits.Remove(Exit);
+		}
 	}
 }
 
@@ -158,11 +151,11 @@ void ADoungeonChunkBase::GetDeadExits(TArray<USceneComponent*>& OutExits)
 		FVector TraceStart = TraceEnd + FVector(0.0f, 0.0f, 250.f);
 
 		ECollisionChannel TraceChannel = ECollisionChannel::ECC_WorldStatic;
-		FCollisionQueryParams QuerryParams;
-		FCollisionObjectQueryParams ObjectQuerryParams;
+		FCollisionQueryParams QueryParams;
+		FCollisionObjectQueryParams ObjectQueryParams;
 		FHitResult HitResult;		
-		const bool bHit = GetWorld()->LineTraceSingleByObjectType(HitResult, TraceStart, TraceEnd, ObjectQuerryParams, QuerryParams);
-		//const bool bHit = GetWorld()->LineTraceSingleByObjectType(HitResult, TraceStart, TraceEnd, ObjectQuerryParams, QuerryParams);
+		const bool bHit = GetWorld()->LineTraceSingleByObjectType(HitResult, TraceStart, TraceEnd, ObjectQueryParams, QueryParams);
+		//const bool bHit = GetWorld()->LineTraceSingleByObjectType(HitResult, TraceStart, TraceEnd, ObjectQueryParams, QuerryParams);
 
 		if (!bHit)
 		{
@@ -181,20 +174,20 @@ void ADoungeonChunkBase::GetDeadExits(TArray<USceneComponent*>& OutExits)
 
 void ADoungeonChunkBase::GetFloorsFromChunkClass(TSubclassOf<ADoungeonChunkBase> ChunkClass, TArray<USceneComponent*>& OutFloors)
 {
-	UBlueprintGeneratedClass* BluepinrtClass = Cast<UBlueprintGeneratedClass>(ChunkClass);
+	UBlueprintGeneratedClass* BlueprintClass = Cast<UBlueprintGeneratedClass>(ChunkClass);
 	do
 	{
-		if (!BluepinrtClass)
+		if (!BlueprintClass)
 		{
 			return;
 		}
 		else
 		{
-			UE_LOG(LogTemp, Warning, TEXT("BluepinrtClass is valid: %s"), *BluepinrtClass->GetFullName());
+			UE_LOG(LogTemp, Warning, TEXT("BluepinrtClass is valid: %s"), *BlueprintClass->GetFullName());
 		}
 
-		const TArray<USCS_Node*>& ActorBlueprintNodes = BluepinrtClass->SimpleConstructionScript->GetAllNodes();
-		UE_LOG(LogTemp, Warning, TEXT("Trying to get floors from class: %s"), *BluepinrtClass->GetFullName());
+		const TArray<USCS_Node*>& ActorBlueprintNodes = BlueprintClass->SimpleConstructionScript->GetAllNodes();
+		UE_LOG(LogTemp, Warning, TEXT("Trying to get floors from class: %s"), *BlueprintClass->GetFullName());
 
 		for (USCS_Node* Node : ActorBlueprintNodes)
 		{
@@ -214,10 +207,10 @@ void ADoungeonChunkBase::GetFloorsFromChunkClass(TSubclassOf<ADoungeonChunkBase>
 			}
 		}
 
-		BluepinrtClass = Cast<UBlueprintGeneratedClass>(BluepinrtClass->GetSuperClass());
-		UE_LOG(LogTemp, Warning, TEXT("New BluepinrtClass: %s"), *BluepinrtClass->GetFullName());
+		BlueprintClass = Cast<UBlueprintGeneratedClass>(BlueprintClass->GetSuperClass());
+		UE_LOG(LogTemp, Warning, TEXT("New BluepinrtClass: %s"), *BlueprintClass->GetFullName());
 		
-	} while (BluepinrtClass != AActor::StaticClass() && BluepinrtClass);	
+	} while (BlueprintClass != AActor::StaticClass() && BlueprintClass);	
 }
 
 void ADoungeonChunkBase::OnVisited()
@@ -232,6 +225,100 @@ void ADoungeonChunkBase::OnVisited()
 void ADoungeonChunkBase::AddBoardChunk(ADungeonChunkBoardBase * NewBoardChunk)
 {
 	BoardChunks.Add(NewBoardChunk);
+}
+
+void ADoungeonChunkBase::FindAndCacheEnemySpawnPoints()
+{
+	TArray<USceneComponent*> SceneComponents;
+	GetComponents<USceneComponent>(SceneComponents, true);
+	for (auto Component : SceneComponents)
+	{
+		if (Component->ComponentHasTag(EnemySpawnPointTag))
+		{
+			EnemySpawnPoints.Add(Component);			
+		}
+	}
+	//UE_LOG(LogTemp, Warning, TEXT("EnemySpawnPoints.Num(): %d"), EnemySpawnPoints.Num());
+}
+
+void ADoungeonChunkBase::FindAndCacheChestSpawnPoints()
+{
+	TArray<USceneComponent*> SceneComponents;
+	GetComponents<USceneComponent>(SceneComponents, true);
+	for (auto Component : SceneComponents)
+	{
+		if (Component->ComponentHasTag(ChestSpawnPointTag))
+		{
+			ChestSpawnPoints.Add(Component);
+		}
+	}
+	//UE_LOG(LogTemp, Warning, TEXT("EnemySpawnPoints.Num(): %d"), EnemySpawnPoints.Num())
+}
+
+void ADoungeonChunkBase::FindAndCacheFloors()
+{
+	TArray<UStaticMeshComponent*> StaticMeshes;
+	GetComponents<UStaticMeshComponent>(StaticMeshes, true);
+	for (auto Mesh : StaticMeshes)
+	{
+		if (Mesh->ComponentHasTag(FloorTag))
+		{
+			if (Mesh->IsCollisionEnabled())
+			{
+				Floors.Add(Mesh);
+			}
+		}
+	}
+}
+
+bool ADoungeonChunkBase::GetCanSpawnEventTriggers()
+{
+	return CanSpawnEventTriggers && EventTriggers.Num() > 0;
+}
+
+bool ADoungeonChunkBase::SpawnEventTrigger()
+{
+	TSubclassOf<AEventTriggerBase> TriggerClass = EventTriggers[FMath::RandRange(0, EventTriggers.Num() - 1)];	
+	if(TriggerClass)
+	{
+		UStaticMeshComponent* TriggerSpawnPoint = Floors[FMath::RandRange(0, Floors.Num() - 1)];
+		if (TriggerSpawnPoint)
+		{
+			FTransform SpawnTransform = FTransform(FRotator(), TriggerSpawnPoint->GetComponentLocation());
+			AEventTriggerBase* Trigger = GetWorld()->SpawnActorDeferred<AEventTriggerBase>(TriggerClass, SpawnTransform);
+			if (Trigger)
+			{
+				//Trigger->Chunk = this;
+				Trigger->EnemySpawnPoints = EnemySpawnPoints;
+				UGameplayStatics::FinishSpawningActor(Trigger, SpawnTransform);
+				return true;
+			}
+		}
+	}
+	return false;
+}
+
+void ADoungeonChunkBase::CloseExits()
+{
+	for(auto Exit: PossibleExits)
+	{
+		FVector Location = Exit->GetComponentLocation();
+		FRotator Rotation = Exit->GetComponentRotation();
+		ADoungeonChunkBase* Blocker = GetWorld()->SpawnActor<ADoungeonChunkBase>(ExitBlockerClass, Location, Rotation);
+		if(Blocker)
+		{
+			ExitBlockers.Add(Blocker);
+		}
+	}
+}
+
+void ADoungeonChunkBase::OpenExits()
+{
+	for(auto Blocker : ExitBlockers)
+	{
+		Blocker->Destroy();
+	}
+	ExitBlockers.Empty();
 }
 
 
