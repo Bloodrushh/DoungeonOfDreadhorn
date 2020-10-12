@@ -6,6 +6,7 @@
 #include "Engine/BlueprintGeneratedClass.h"
 #include "Engine/SCS_Node.h"
 #include "Kismet/GameplayStatics.h"
+#include "EventTriggerBase.h"
 // Sets default values
 ADoungeonChunkBase::ADoungeonChunkBase()
 {
@@ -284,13 +285,13 @@ bool ADoungeonChunkBase::SpawnEventTrigger()
 		UStaticMeshComponent* TriggerSpawnPoint = Floors[FMath::RandRange(0, Floors.Num() - 1)];
 		if (TriggerSpawnPoint)
 		{
-			FTransform SpawnTransform = FTransform(FRotator(), TriggerSpawnPoint->GetComponentLocation());
+			FTransform SpawnTransform = FTransform(FRotator(0.0f,0.0f,0.0f), TriggerSpawnPoint->GetComponentLocation());
 			AEventTriggerBase* Trigger = GetWorld()->SpawnActorDeferred<AEventTriggerBase>(TriggerClass, SpawnTransform);
 			if (Trigger)
 			{
-				//Trigger->Chunk = this;
+				Trigger->Chunk = this;
 				Trigger->EnemySpawnPoints = EnemySpawnPoints;
-				UGameplayStatics::FinishSpawningActor(Trigger, SpawnTransform);
+				UGameplayStatics::FinishSpawningActor(Trigger, SpawnTransform);;
 				return true;
 			}
 		}
@@ -320,6 +321,3 @@ void ADoungeonChunkBase::OpenExits()
 	}
 	ExitBlockers.Empty();
 }
-
-
-

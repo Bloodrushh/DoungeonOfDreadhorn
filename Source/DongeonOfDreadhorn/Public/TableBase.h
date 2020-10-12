@@ -1,14 +1,13 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #pragma once
+
 #include "ProjectTypes.h"
 #include "DODPlayerController.h"
 #include "DiceBase.h"
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "TableBase.generated.h"
-
-DECLARE_DYNAMIC_DELEGATE_OneParam(FOnEvenProcessed, bool, bSucceed);
 
 UCLASS()
 class DONGEONOFDREADHORN_API ATableBase : public AActor
@@ -39,16 +38,16 @@ public:
 		ADiceBase* Dice;
 
 	UFUNCTION(BlueprintCallable)
-	void StartEvent(FEventInfo EventInfo, const FOnEvenProcessed Callback);
+	void StartEvent(FEventInfo EventInfo, const FOnEventProcessed Callback);
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 		ADODPlayerController* DODPlayerController;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	//VisibleAnywhere
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 		APlayerPawn* PlayerPawn;
 
 	UFUNCTION()
-	void OnValueDetermined(int32 Value, FEventInfo EventInfo, const FOnEvenProcessed Callback);
+	void OnValueDetermined(int32 Value, FEventInfo EventInfo, const FOnEventProcessed Callback);
 
 	UPROPERTY(EditDefaultsOnly)
 		UDataTable* CharactersDT;
@@ -73,7 +72,12 @@ public:
 	UPROPERTY(EditDefaultsOnly)
 		int32 CharactersToGenerate = 5;
 
+	//FOnEvenProcessed
+
 	bool GetRandomName(ERace Race, EGender Gender, FText& OutFirstName, FText& OutSecondName);
+
+	UPROPERTY(EditAnywhere)
+		int32 TESTDeterminedValue = 0;
 	
 };
 

@@ -1,14 +1,13 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #pragma once
+#include "ProjectTypes.h"
 #include "DiceFaceComponent.h"
 #include "PickupableInterface.h"
 #include "Components/StaticMeshComponent.h"
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "DiceBase.generated.h"
-
-DECLARE_DELEGATE_OneParam(FOnValueDetermined, int32 /*Value*/);
 
 UCLASS()
 class DONGEONOFDREADHORN_API ADiceBase : public AActor, public IPickupableInterface

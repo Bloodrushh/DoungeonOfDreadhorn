@@ -124,5 +124,7 @@ public:
 
 	bool RemoveCharacterFromParty(int32 InIndex);
 
-	void GetAttributeValue(EAttribute InAttribute, int32& OutValue);
+	void GetAttributeValue(EAttribute InAttribute, bool bGroup, int32& OutValue);
+
+	void ChangeAttributeValue(EEffect Effect, EAttribute Attribute, int32 inValue);
 };

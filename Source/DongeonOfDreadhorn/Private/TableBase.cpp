@@ -4,7 +4,7 @@
 #include "TableBase.h"
 #include "Kismet/GamePlayStatics.h"
 #include "PlayerPawn.h"
-
+#include "EventTriggerBase.h"
 // Sets default values
 ATableBase::ATableBase()
 {
@@ -19,7 +19,7 @@ void ATableBase::BeginPlay()
 	Super::BeginPlay();
 	
 	DODPlayerController = Cast<ADODPlayerController>(UGameplayStatics::GetPlayerController(this, 0));
-	PlayerPawn = Cast<APlayerPawn>(UGameplayStatics::GetPlayerPawn(this, 0));	
+//PlayerPawn = Cast<APlayerPawn>(UGameplayStatics::GetPlayerPawn(this, 0));	
 	GenerateCharactersPool();
 
 	for(auto Character: Characters)
@@ -52,69 +52,31 @@ void ATableBase::GetBounce(float & OutMaxX, float & OutMinX, float & OutMaxY, fl
 	OutMinY = Location.Y - Width;
 }
 
-void ATableBase::StartEvent(FEventInfo EventInfo, const FOnEvenProcessed Callback)
-{
-	if (Dice)
+void ATableBase::StartEvent(FEventInfo EventInfo, const FOnEventProcessed Callback)
+{	
+	Callback.ExecuteIfBound(TESTDeterminedValue, PlayerPawn);
+
+	// Uncomment below then test is over
+	/*if (Dice)
 	{
-		//FOnValueDetermined::CreateUObject(this, &ATableBase::OnValueDetermined);
 		Dice->Reset();
 		Dice->OnValueDetermined.BindUObject(this, &ATableBase::OnValueDetermined, EventInfo, Callback);
-		DODPlayerController->TravelToBoard();
+
+		// PlayerPawn bCanMove = false
+		//DODPlayerController->TravelToBoard();
 	}
 	else
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Dice is invalid"));
-	}
+	}*/
 }
 
-void ATableBase::OnValueDetermined(int32 Value, FEventInfo EventInfo, const FOnEvenProcessed Callback)
+void ATableBase::OnValueDetermined(int32 Value, FEventInfo EventInfo, const FOnEventProcessed Callback)
 {
-	UE_LOG(LogTemp, Warning, TEXT("DeterminedValue: %d"), Value);
-	bool Result = false;
+	UE_LOG(LogTemp, Warning, TEXT("DeterminedValue: %d"), Value);		
 	
-	if(EventInfo.bAttributeBased)
-	{
-		int32 AttributeValue = 0;
-		PlayerPawn->GetAttributeValue(EventInfo.Attribute, AttributeValue);
-		AttributeValue = FMath::Clamp(AttributeValue, 1, 6);
-
-		Result = EventInfo.bReversed ? Value >= 6 - AttributeValue : Value <= AttributeValue + 1;
-
-		if (EventInfo.bReversed)
-		{
-			UE_LOG(LogTemp, Warning, TEXT("Determined value should be greater or equal than: %d"), 6 - AttributeValue);
-		}
-		else
-		{
-			UE_LOG(LogTemp, Warning, TEXT("Determined value should be less or equal than: %d"), AttributeValue + 1);
-		}		
-	}
-	else
-	{		
-		Result = EventInfo.SuccessNumbers.Contains(Value);
-		UE_LOG(LogTemp, Warning, TEXT("SuccessNumbers:"));
-		for (auto Number : EventInfo.SuccessNumbers)
-		{
-			UE_LOG(LogTemp, Warning, TEXT("%d"), Number);
-		}
-	}
-	
-	//int32 SuccessThreshold = FMath::Clamp(AttributeValue, 1, 6)	;
-	
-	/*switch (EventInfo.Event)
-	{
-	case EEvent::Trap:
-		break;
-	case EEvent::Fight:
-		Result = Value <= SuccessThreshold;
-		break;
-	case EEvent::Chest:
-		break;
-	default:
-		break;
-	}*/
-	//Result = Value <= SuccessThreshold;
-	Callback.ExecuteIfBound(Result);	
+	Callback.ExecuteIfBound(Value, PlayerPawn);
+	// PlayerPawn bCanMove = true
 	DODPlayerController->TravelToDungeon();
 }
 

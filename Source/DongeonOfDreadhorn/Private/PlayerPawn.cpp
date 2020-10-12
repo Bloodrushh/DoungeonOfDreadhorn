@@ -260,11 +260,80 @@ bool APlayerPawn::RemoveCharacterFromParty(int32 InIndex)
 	return false;
 }
 
-void APlayerPawn::GetAttributeValue(EAttribute InAttribute, int32& OutValue)
+void APlayerPawn::GetAttributeValue(EAttribute InAttribute, bool bGroup, int32& OutValue)
 {
-	int32 LocalValue = 0;
-	for(auto Character : Characters)
+	if(bGroup)
 	{
-		OutValue += *Character.AttributesInfo.Attributes.Find(InAttribute);
+		int32 LocalValue = 0;
+		for (auto Character : Characters)
+		{
+			OutValue += *Character.AttributesInfo.Attributes.Find(InAttribute);
+		}
 	}
+	else
+	{
+		OutValue = *Characters[ActiveCharacterIndex].AttributesInfo.Attributes.Find(InAttribute);
+	}	
+}
+
+void APlayerPawn::ChangeAttributeValue(EEffect Effect, EAttribute Attribute, int32 inValue)
+{
+	int32* AttributeValue = Characters[ActiveCharacterIndex].AttributesInfo.Attributes.Find(Attribute);
+	int32 NewValue = *AttributeValue;
+
+	// for debug
+	FString StringAttribute;
+	FString StringEffect;
+	
+	switch (Effect)
+	{
+	case EEffect::Add:
+		StringEffect = TEXT("Added");
+		NewValue += inValue;
+		break;
+	case EEffect::Subtract:
+		StringEffect = TEXT("Subtracted");
+		NewValue -= inValue;
+		break;
+	case EEffect::Multiply:
+		StringEffect = TEXT("Multiplied");
+		NewValue *= inValue;
+		break;
+	case EEffect::Divide:
+		StringEffect = TEXT("Divided");
+		NewValue /= inValue;
+		break;
+	case EEffect::Null:
+		break;
+	}
+	// for debug
+	switch (Attribute)
+	{
+	case EAttribute::Health:
+		StringAttribute = TEXT("Health");
+		break;
+	case EAttribute::Damage:
+		StringAttribute = TEXT("Damage");
+		break;
+	case EAttribute::ActionPoints:
+		StringAttribute = TEXT("ActionPoints");
+		break;
+	case EAttribute::Initiative:
+		StringAttribute = TEXT("Initiative");
+		break;
+	case EAttribute::Strength:
+		StringAttribute = TEXT("Strength");
+		break;
+	case EAttribute::Agility:
+		StringAttribute = TEXT("Agility");
+		break;
+	case EAttribute::Intelligence:
+		StringAttribute = TEXT("Intelligence");
+		break;
+	}
+
+	UE_LOG(LogTemp, Warning, TEXT("Attribute: %s was changed for Character: \"%s - %s\" by Effect: %s by value: %d. Old value: %d, New value: %d"),
+	       *StringAttribute, *Characters[ActiveCharacterIndex].GeneralInfo.FirstName.ToString(), *Characters[ActiveCharacterIndex].GeneralInfo.SecondName.ToString(), *StringEffect, inValue, *AttributeValue, NewValue);
+	
+	*AttributeValue = NewValue;
 }

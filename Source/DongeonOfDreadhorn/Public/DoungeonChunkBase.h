@@ -1,11 +1,12 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #pragma once
-#include "EventTriggerBase.h"
 #include "DungeonChunkBoardBase.h"
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "DoungeonChunkBase.generated.h"
+
+class AEventTriggerBase;
 
 UCLASS()
 class DONGEONOFDREADHORN_API ADoungeonChunkBase : public AActor

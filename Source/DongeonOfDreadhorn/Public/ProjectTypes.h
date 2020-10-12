@@ -4,6 +4,10 @@
 #include "CoreMinimal.h"
 #include "ProjectTypes.generated.h"
 
+class APlayerPawn;
+
+DECLARE_DYNAMIC_DELEGATE_TwoParams(FOnEventProcessed, int32, DeterminedValue, APlayerPawn*&, InPlayerPawn);
+DECLARE_DELEGATE_OneParam(FOnValueDetermined, int32 /*Value*/);
 
 UENUM(BlueprintType)
 enum class EEvent : uint8
@@ -131,7 +135,11 @@ struct FGeneralInfo
 		ETier Tier;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-		EAttack Attack;	
+		EAttack Attack;
+	FGeneralInfo()
+	{
+		Languages.SetNumZeroed(1);
+	}
 };
 
 USTRUCT(BlueprintType)
@@ -165,6 +173,21 @@ struct FChacterNames : public FTableRowBase
 };
 
 USTRUCT(BlueprintType)
+struct FCondition
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+		EEffect Effect;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+		EAttribute Attribute;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+		int32 Amount;	
+};
+
+USTRUCT(BlueprintType)
 struct FEventInfo
 {
 	GENERATED_BODY()
@@ -176,7 +199,16 @@ struct FEventInfo
 		bool bAttributeBased;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+		bool bGroup;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 		EAttribute Attribute;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+		int32 AttributeThreshold;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+		int32 BonusValue;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 		bool bReversed;
@@ -185,20 +217,11 @@ struct FEventInfo
 		TArray<int32> SuccessNumbers;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-		EEffect SuccessEffect;
+		bool bHardCondition;
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+		TArray<FCondition> SuccessConditions;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-		EAttribute SuccessAttribute;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-		int32 SuccessAmount;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-		EEffect FailEffect;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-		EAttribute FailAttribute;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-		int32 FailAmount;	
+		TArray<FCondition> FailureConditions;
 };
