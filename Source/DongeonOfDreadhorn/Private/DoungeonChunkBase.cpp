@@ -317,7 +317,13 @@ void ADoungeonChunkBase::OpenExits()
 {
 	for(auto Blocker : ExitBlockers)
 	{
-		Blocker->Destroy();
+		Blocker->Disappear();
 	}
 	ExitBlockers.Empty();
+}
+
+void ADoungeonChunkBase::Disappear()
+{
+	DisappearBP();
+	Destroy();
 }

@@ -2,6 +2,7 @@
 
 
 #include "EnemyBase.h"
+#include "EventTriggerFight.h"
 
 // Sets default values
 AEnemyBase::AEnemyBase()
@@ -28,5 +29,22 @@ void AEnemyBase::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+}
+
+void AEnemyBase::Die()
+{
+	//AEventTriggerFight* EventTriggerFight = Cast<AEventTriggerFight>(EventTrigger);
+	if (AEventTriggerFight* EventTriggerFight = Cast<AEventTriggerFight>(EventTrigger)) { EventTriggerFight->OnEnemyDied(this); }
+	void OnDiedBP();
+}
+
+void AEnemyBase::TakeDamage(int32 Amount, EAttack Attack)
+{
+	OnDamageTakenBP(Amount, Attack);
+}
+
+bool AEnemyBase::CanTakeDamage()
+{	
+	return false;
 }
 

@@ -29,7 +29,7 @@ public:
 	UPROPERTY()
 		TArray<USceneComponent*> ValidExits;
 
-	UPROPERTY()
+	UPROPERTY(BlueprintReadOnly)
 		TArray<USceneComponent*> EnemySpawnPoints;
 
 	UPROPERTY()
@@ -101,7 +101,14 @@ public:
 	
 	TArray<ADoungeonChunkBase*> ExitBlockers;
 
-	void CloseExits();
-	
-	void OpenExits();
+	UFUNCTION(BlueprintCallable)
+		void CloseExits();
+
+	UFUNCTION(BlueprintCallable)
+		void OpenExits();
+
+	void Disappear();
+
+	UFUNCTION(BlueprintImplementableEvent)
+		void DisappearBP();
 };

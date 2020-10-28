@@ -5,9 +5,11 @@
 #include "ProjectTypes.generated.h"
 
 class APlayerPawn;
+class AEnemyBase;
 
 DECLARE_DYNAMIC_DELEGATE_TwoParams(FOnEventProcessed, int32, DeterminedValue, APlayerPawn*&, InPlayerPawn);
 DECLARE_DELEGATE_OneParam(FOnValueDetermined, int32 /*Value*/);
+//DECLARE_DYNAMIC_DELEGATE_OneParam(FOnEnemyDied, AEnemyBase*, Enemy);
 
 UENUM(BlueprintType)
 enum class EEvent : uint8
@@ -81,7 +83,7 @@ enum class EGender : uint8
 UENUM(BlueprintType)
 enum class EEffect : uint8
 {
-	Null,
+	None,
 	Add,
 	Subtract,
 	Multiply,
@@ -136,6 +138,7 @@ struct FGeneralInfo
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 		EAttack Attack;
+	
 	FGeneralInfo()
 	{
 		Languages.SetNumZeroed(1);
@@ -178,19 +181,32 @@ struct FCondition
 	GENERATED_BODY()
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+		FText Description;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+		TArray<FText> KeyWordsValues;
+	
+	
+	/*UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 		EEffect Effect;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 		EAttribute Attribute;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-		int32 Amount;	
+		int32 Amount;*/	
 };
 
 USTRUCT(BlueprintType)
 struct FEventInfo
 {
 	GENERATED_BODY()
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+		FText Description;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+		UTexture2D* Icon;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 		EEvent Event;

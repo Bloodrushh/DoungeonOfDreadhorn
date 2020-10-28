@@ -9,6 +9,8 @@
 #include "GameFramework/Actor.h"
 #include "TableBase.generated.h"
 
+class UWidgetComponent;
+
 UCLASS()
 class DONGEONOFDREADHORN_API ATableBase : public AActor
 {
@@ -78,6 +80,9 @@ public:
 
 	UPROPERTY(EditAnywhere)
 		int32 TESTDeterminedValue = 0;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+		UWidgetComponent* TestEventWindow;
 	
 };
 

@@ -1,16 +1,20 @@
-// Fill out your copyright notice in the Description page of Project Settings.
 
 
 #include "TableBase.h"
 #include "Kismet/GamePlayStatics.h"
 #include "PlayerPawn.h"
 #include "EventTriggerBase.h"
+#include "Components/WidgetComponent.h"
+#include "EventWidget.h"
 // Sets default values
 ATableBase::ATableBase()
 {
- 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
+ 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.	
 	PrimaryActorTick.bCanEverTick = true;
-
+	RootComponent = CreateDefaultSubobject<USceneComponent>(TEXT("RootComponent"));
+	TestEventWindow = CreateDefaultSubobject<UWidgetComponent>(TEXT("TestEventInfo"));
+	TestEventWindow->SetupAttachment(RootComponent);
+	TestEventWindow->SetWidgetClass(UEventWidget::StaticClass());
 }
 
 // Called when the game starts or when spawned
@@ -53,8 +57,9 @@ void ATableBase::GetBounce(float & OutMaxX, float & OutMinX, float & OutMaxY, fl
 }
 
 void ATableBase::StartEvent(FEventInfo EventInfo, const FOnEventProcessed Callback)
-{	
-	Callback.ExecuteIfBound(TESTDeterminedValue, PlayerPawn);
+{
+	Cast<UEventWidget>(TestEventWindow->GetUserWidgetObject())->DisplayEvent(EventInfo);
+	Callback.ExecuteIfBound(TESTDeterminedValue, PlayerPawn);	
 
 	// Uncomment below then test is over
 	/*if (Dice)

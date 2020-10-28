@@ -7,7 +7,7 @@
 #include "GameFramework/Actor.h"
 #include "EventTriggerBase.generated.h"
 
-
+class AEnemyBase;
 class ADoungeonChunkBase;
 
 UCLASS()
@@ -62,15 +62,24 @@ public:
 	FOnEventProcessed OnEventProcessedDelegate;
 
 	UFUNCTION()
-	void OnEventProcessed(int32 DeterminedValue, APlayerPawn*& InPlayerPawn);
-
-
-	UFUNCTION(BlueprintImplementableEvent)
-		void OnEventProcessedBP();
-	
-		void FinishEvent(bool bSucceed);
+		virtual void OnEventProcessed(int32 DeterminedValue, APlayerPawn*& InPlayerPawn);
 
 	UFUNCTION(BlueprintImplementableEvent)
-		void OnEventFinishedBP(bool bSucceed);
+		void OnEventProcessedBP(bool bResult, int32 Difference);
+
+	UFUNCTION(BlueprintCallable)
+		void FinishEvent();
+
+	UFUNCTION(BlueprintImplementableEvent)
+		void OnEventFinishedBP();
 	
+	UPROPERTY(BlueprintReadOnly)
+		bool bEventResult = false;
+
+	UPROPERTY(BlueprintReadOnly)
+		APlayerPawn* PlayerPawn;
 };
+
+
+
+

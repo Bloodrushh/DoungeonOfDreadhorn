@@ -303,7 +303,7 @@ void APlayerPawn::ChangeAttributeValue(EEffect Effect, EAttribute Attribute, int
 		StringEffect = TEXT("Divided");
 		NewValue /= inValue;
 		break;
-	case EEffect::Null:
+	case EEffect::None:
 		break;
 	}
 	// for debug
@@ -336,4 +336,14 @@ void APlayerPawn::ChangeAttributeValue(EEffect Effect, EAttribute Attribute, int
 	       *StringAttribute, *Characters[ActiveCharacterIndex].GeneralInfo.FirstName.ToString(), *Characters[ActiveCharacterIndex].GeneralInfo.SecondName.ToString(), *StringEffect, inValue, *AttributeValue, NewValue);
 	
 	*AttributeValue = NewValue;
+}
+
+void APlayerPawn::TakeDamage(int32 Amount, EAttack Attack)
+{
+	OnDamageTakenBP(Amount, Attack);
+}
+
+bool APlayerPawn::CanTakeDamage()
+{
+	return false;
 }

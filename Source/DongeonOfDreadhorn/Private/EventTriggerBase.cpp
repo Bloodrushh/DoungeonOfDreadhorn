@@ -43,7 +43,7 @@ void AEventTriggerBase::OnConstruction(const FTransform& Transform)
 
 bool AEventTriggerBase::TargetIsOnLineOfSight(AActor* InTarget)
 {
-	APlayerPawn* PlayerPawn = Cast<APlayerPawn>(InTarget);
+	PlayerPawn = Cast<APlayerPawn>(InTarget);
 	if(PlayerPawn)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("InTarget is a PlayerPawn"));
@@ -122,27 +122,29 @@ void AEventTriggerBase::OnEventProcessed(int32 DeterminedValue, APlayerPawn*& In
 	UE_LOG(LogTemp, Warning, TEXT("OnEventProcceedTwo called"));
 	UE_LOG(LogTemp, Warning, TEXT("DeterminedValue: %d called"), DeterminedValue);
 	OnEventProcessedDelegate.Clear();
-	OnEventProcessedBP();
-	bool Result = false;
 
 	if(!InPlayerPawn)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("InPlayerPawn is not valid"));
-		FinishEvent(Result);
+		FinishEvent();
 		return;		
 	}
+
+	PlayerPawn = InPlayerPawn;
 	
 	if (EventInfo.SuccessNumbers.Num() <= 0)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("EventInfo.SuccessNumbers.Num() <= 0"));
-		FinishEvent(Result);
+		FinishEvent();
 		return;
 	}
 
 	int32 AttributeValue = 0;
-	InPlayerPawn->GetAttributeValue(EventInfo.Attribute, EventInfo.bGroup, AttributeValue);
+	PlayerPawn->GetAttributeValue(EventInfo.Attribute, EventInfo.bGroup, AttributeValue);
+
+	// probably change it to class variable or delete at all and determine what to do in BPs	
 	FCondition Condition = FCondition();
-	int32 Difference = 0;
+	int32 LocalDifference = 0;
 	
 	UE_LOG(LogTemp, Warning, TEXT("EventInfo.SuccessNumbers.Num() > 0"));
 	if (EventInfo.bAttributeBased)
@@ -155,46 +157,46 @@ void AEventTriggerBase::OnEventProcessed(int32 DeterminedValue, APlayerPawn*& In
 			UE_LOG(LogTemp, Warning, TEXT("AttributeValue(%d) >= EventInfo.AttributeThreshold(%d). BonusValue: %d"), AttributeValue, EventInfo.AttributeThreshold, BonusValue);
 		}
 
-		int32 TotalValue = 0;
-		Difference = FMath::Abs(EventInfo.SuccessNumbers[0] - TotalValue);
-		UE_LOG(LogTemp, Warning, TEXT("Difference: %d"), Difference);
+		int32 TotalValue = 0;		
+		UE_LOG(LogTemp, Warning, TEXT("LocalDifference: %d"), LocalDifference);
 		if (EventInfo.bReversed)
 		{
 			UE_LOG(LogTemp, Warning, TEXT("EventInfo.bReversed"));
 			TotalValue = FMath::Clamp(DeterminedValue - BonusValue, 1, 6);
-			Result = TotalValue <= EventInfo.SuccessNumbers[0];
+			bEventResult = TotalValue <= EventInfo.SuccessNumbers[0];
 		}
 		else
 		{
 			TotalValue = FMath::Clamp(DeterminedValue + BonusValue, 1, 6);
-			Result = TotalValue >= EventInfo.SuccessNumbers[0];
+			bEventResult = TotalValue >= EventInfo.SuccessNumbers[0];
 		}
-		Condition = Result ? EventInfo.SuccessConditions[FMath::Clamp(Difference, 0, 5)] : EventInfo.FailureConditions[FMath::Clamp(Difference - 1, 0, 5)];
+		LocalDifference = FMath::Abs(EventInfo.SuccessNumbers[0] - TotalValue);
+		Condition = bEventResult ? EventInfo.SuccessConditions[FMath::Clamp(LocalDifference, 0, 5)] : EventInfo.FailureConditions[FMath::Clamp(LocalDifference - 1, 0, 5)];
 	}
 	else
 	{
 		if (EventInfo.SuccessNumbers.Num() == 1)
 		{
 			UE_LOG(LogTemp, Warning, TEXT("EventInfo.SuccessNumbers.Num() == 1. Value: %d"), EventInfo.SuccessNumbers[0]);
-			Difference = FMath::Abs(EventInfo.SuccessNumbers[0] - DeterminedValue);
-			UE_LOG(LogTemp, Warning, TEXT("Difference: %d"), Difference);
+			LocalDifference = FMath::Abs(EventInfo.SuccessNumbers[0] - DeterminedValue);
+			UE_LOG(LogTemp, Warning, TEXT("LocalDifference: %d"), LocalDifference);
 			if (EventInfo.bHardCondition)
 			{
 				UE_LOG(LogTemp, Warning, TEXT("EventInfo.bHardCondition"));
-				Result = DeterminedValue == EventInfo.SuccessNumbers[0];
-				Condition = Result ? EventInfo.SuccessConditions[0] : EventInfo.FailureConditions[FMath::Clamp(Difference - 1, 0, 5)];
+				bEventResult = DeterminedValue == EventInfo.SuccessNumbers[0];
+				Condition = bEventResult ? EventInfo.SuccessConditions[0] : EventInfo.FailureConditions[FMath::Clamp(LocalDifference - 1, 0, 5)];
 			}
 			else
 			{
 				if (EventInfo.bReversed)
 				{
-					Result = DeterminedValue <= EventInfo.SuccessNumbers[0];
+					bEventResult = DeterminedValue <= EventInfo.SuccessNumbers[0];
 				}
 				else
 				{
-					Result = DeterminedValue >= EventInfo.SuccessNumbers[0];
+					bEventResult = DeterminedValue >= EventInfo.SuccessNumbers[0];
 				}
-				Condition = Result ? EventInfo.SuccessConditions[FMath::Clamp(Difference, 0, 5)] : EventInfo.FailureConditions[FMath::Clamp(Difference - 1, 0, 5)];
+				Condition = bEventResult ? EventInfo.SuccessConditions[FMath::Clamp(LocalDifference, 0, 5)] : EventInfo.FailureConditions[FMath::Clamp(LocalDifference - 1, 0, 5)];
 			}
 		}
 		else
@@ -204,32 +206,32 @@ void AEventTriggerBase::OnEventProcessed(int32 DeterminedValue, APlayerPawn*& In
 			{
 				UE_LOG(LogTemp, Warning, TEXT("%d"), Number);
 			}
-			Result = EventInfo.SuccessNumbers.Contains(DeterminedValue);
-			Condition = Result ? EventInfo.SuccessConditions[0] : EventInfo.FailureConditions[0];
+			bEventResult = EventInfo.SuccessNumbers.Contains(DeterminedValue);
+			Condition = bEventResult ? EventInfo.SuccessConditions[0] : EventInfo.FailureConditions[0];
 		}
 	}
-	switch (EventInfo.Event)
+	/*switch (EventInfo.Event)
 	{
 	case EEvent::Fight:
 		Chunk->CloseExits();
 		// Do stuff like spawn enemies, comfigure their params, apply buffs/debuffs on player etc
-		FinishEvent(Result);
 		break;
 	case EEvent::Trap:
 		// Do stuff like dealing damage to player, apply buffs/debuffs on player etc		
 		InPlayerPawn->ChangeAttributeValue(Condition.Effect, Condition.Attribute, Condition.Amount);
-		FinishEvent(Result);
+		//FinishEvent(bEventResult);
 		break;;
 	case EEvent::Chest:
 		// Do stuff like giving reward to player, apply buffs/debuffs on player etc
-		FinishEvent(Result);
+		//FinishEvent(bEventResult);
 		break;
-	}	
+	}*/
+	OnEventProcessedBP(bEventResult, LocalDifference);
 }
 
-void AEventTriggerBase::FinishEvent(bool bSucceed)
+void AEventTriggerBase::FinishEvent()
 {
-	switch (EventInfo.Event)
+	/*switch (EventInfo.Event)
 	{
 	case EEvent::Fight:
 		// Do stuff like open doors 
@@ -241,7 +243,6 @@ void AEventTriggerBase::FinishEvent(bool bSucceed)
 	case EEvent::Chest:
 		// Do stuff
 		break;
-	}
-	OnEventFinishedBP(bSucceed);
+	}*/
+	OnEventFinishedBP();
 }
-

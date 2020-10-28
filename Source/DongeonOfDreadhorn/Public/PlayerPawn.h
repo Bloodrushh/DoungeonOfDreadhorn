@@ -1,9 +1,10 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #pragma once
-#include "ProjectTypes.h"
+//#include "ProjectTypes.h"
 #include "Camera/CameraComponent.h"
 #include "CoreMinimal.h"
+#include "DamageableInterface.h"
 #include "Engine/DataTable.h"
 #include "GameFramework/Pawn.h"
 #include "PlayerPawn.generated.h"
@@ -12,7 +13,7 @@ class AHandBase;
 class AFootPrintDecal;
 
 UCLASS()
-class DONGEONOFDREADHORN_API APlayerPawn : public APawn
+class DONGEONOFDREADHORN_API APlayerPawn : public APawn, public IDamageableInterface
 {
 	GENERATED_BODY()
 
@@ -124,7 +125,16 @@ public:
 
 	bool RemoveCharacterFromParty(int32 InIndex);
 
-	void GetAttributeValue(EAttribute InAttribute, bool bGroup, int32& OutValue);
+	UFUNCTION(BlueprintCallable)
+		void GetAttributeValue(EAttribute InAttribute, bool bGroup, int32& OutValue);
 
-	void ChangeAttributeValue(EEffect Effect, EAttribute Attribute, int32 inValue);
+	UFUNCTION(BlueprintCallable)
+		void ChangeAttributeValue(EEffect Effect, EAttribute Attribute, int32 inValue);
+
+	void TakeDamage(int32 Amount, EAttack Attack) override;
+
+	bool CanTakeDamage() override;
+
+	UFUNCTION(BlueprintImplementableEvent)
+		void OnDamageTakenBP(int32 Amount, EAttack Attack);
 };
