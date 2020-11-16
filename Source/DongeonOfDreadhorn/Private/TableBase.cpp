@@ -65,14 +65,20 @@ void ATableBase::StartEvent(FEventInfo EventInfo, const FOnEventProcessed Callba
 	/*if (Dice)
 	{
 		Dice->Reset();
-		Dice->OnValueDetermined.BindUObject(this, &ATableBase::OnValueDetermined, EventInfo, Callback);
-
-		// PlayerPawn bCanMove = false
-		//DODPlayerController->TravelToBoard();
+		Dice->OnValueDetermined.BindUObject(this, &ATableBase::OnValueDetermined, EventInfo, Callback);		
 	}
 	else
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Dice is invalid"));
+	}*/
+
+	/*if(PlayerPawn)
+	{
+		PlayerPawn bCanMove = false
+	}	
+	if (DODPlayerController)
+	{
+		DODPlayerController->TravelToBoard();
 	}*/
 }
 
