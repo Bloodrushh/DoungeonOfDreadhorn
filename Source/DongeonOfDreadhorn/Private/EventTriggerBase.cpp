@@ -143,7 +143,7 @@ void AEventTriggerBase::OnEventProcessed(int32 DeterminedValue, APlayerPawn*& In
 	PlayerPawn->GetAttributeValue(EventInfo.Attribute, EventInfo.bGroup, AttributeValue);
 
 	// probably change it to class variable or delete at all and determine what to do in BPs	
-	FCondition Condition = FCondition();
+	//FCondition Condition = FCondition();
 	int32 LocalDifference = 0;
 	
 	UE_LOG(LogTemp, Warning, TEXT("EventInfo.SuccessNumbers.Num() > 0"));
@@ -171,7 +171,7 @@ void AEventTriggerBase::OnEventProcessed(int32 DeterminedValue, APlayerPawn*& In
 			bEventResult = TotalValue >= EventInfo.SuccessNumbers[0];
 		}
 		LocalDifference = FMath::Abs(EventInfo.SuccessNumbers[0] - TotalValue);
-		Condition = bEventResult ? EventInfo.SuccessConditions[FMath::Clamp(LocalDifference, 0, 5)] : EventInfo.FailureConditions[FMath::Clamp(LocalDifference - 1, 0, 5)];
+		//Condition = bEventResult ? EventInfo.SuccessConditions[FMath::Clamp(LocalDifference, 0, 5)] : EventInfo.FailureConditions[FMath::Clamp(LocalDifference - 1, 0, 5)];
 	}
 	else
 	{
@@ -184,7 +184,7 @@ void AEventTriggerBase::OnEventProcessed(int32 DeterminedValue, APlayerPawn*& In
 			{
 				UE_LOG(LogTemp, Warning, TEXT("EventInfo.bHardCondition"));
 				bEventResult = DeterminedValue == EventInfo.SuccessNumbers[0];
-				Condition = bEventResult ? EventInfo.SuccessConditions[0] : EventInfo.FailureConditions[FMath::Clamp(LocalDifference - 1, 0, 5)];
+				//Condition = bEventResult ? EventInfo.SuccessConditions[0] : EventInfo.FailureConditions[FMath::Clamp(LocalDifference - 1, 0, 5)];
 			}
 			else
 			{
@@ -196,7 +196,7 @@ void AEventTriggerBase::OnEventProcessed(int32 DeterminedValue, APlayerPawn*& In
 				{
 					bEventResult = DeterminedValue >= EventInfo.SuccessNumbers[0];
 				}
-				Condition = bEventResult ? EventInfo.SuccessConditions[FMath::Clamp(LocalDifference, 0, 5)] : EventInfo.FailureConditions[FMath::Clamp(LocalDifference - 1, 0, 5)];
+				//Condition = bEventResult ? EventInfo.SuccessConditions[FMath::Clamp(LocalDifference, 0, 5)] : EventInfo.FailureConditions[FMath::Clamp(LocalDifference - 1, 0, 5)];
 			}
 		}
 		else
@@ -207,9 +207,10 @@ void AEventTriggerBase::OnEventProcessed(int32 DeterminedValue, APlayerPawn*& In
 				UE_LOG(LogTemp, Warning, TEXT("%d"), Number);
 			}
 			bEventResult = EventInfo.SuccessNumbers.Contains(DeterminedValue);
-			Condition = bEventResult ? EventInfo.SuccessConditions[0] : EventInfo.FailureConditions[0];
+			//Condition = bEventResult ? EventInfo.SuccessConditions[0] : EventInfo.FailureConditions[0];
 		}
 	}
+	// we have to do it in BP
 	/*switch (EventInfo.Event)
 	{
 	case EEvent::Fight:
