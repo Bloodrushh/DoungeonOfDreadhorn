@@ -16,30 +16,7 @@ class DONGEONOFDREADHORN_API ADungeonGeneratorBase : public AActor
 
 public:
 	// Sets default values for this actor's properties
-	ADungeonGeneratorBase();
-
-	UPROPERTY(EditDefaultsOnly)
-	TArray<TSubclassOf<ADoungeonChunkBase>> ChunkClasses;
-
-	UPROPERTY(EditDefaultsOnly)
-	TSubclassOf<ADoungeonChunkBase> EntranceChunkClass;
-
-	UPROPERTY(EditDefaultsOnly)
-	TSubclassOf<ADoungeonChunkBase> ExitChunkClass;
-
-	UPROPERTY()
-	TArray<TSubclassOf<ADoungeonChunkBase>> BannedChunkClasses;
-
-	UPROPERTY()
-	ADoungeonChunkBase* LastSpawnedChunk;
-
-	UPROPERTY()
-	TArray<ADoungeonChunkBase*> SpawnedChunks;
-
-	UPROPERTY(EditDefaultsOnly)
-	int32 ChunksToSpawn = 30;
-
-	int32 ChunksAmount;
+	ADungeonGeneratorBase();		
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	ABoardBase* Board;
@@ -48,10 +25,7 @@ public:
 	APlayerPawn* PlayerPawn;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	ADungeonManager* DungeonManager;
-	
-	UPROPERTY(EditDefaultsOnly)
-	int32 EventTriggersToSpawn = 10;
+	ADungeonManager* DungeonManager;	
 
 protected:
 	// Called when the game starts or when spawned
@@ -64,10 +38,21 @@ protected:
 	void PlaceEventTriggers();
 
 	void PlaceSecretRooms();
-
+	
 public:
-
 	UFUNCTION(BlueprintCallable)
 	void Reset();
-	
+
+protected:
+	UPROPERTY()
+	TArray<TSubclassOf<ADoungeonChunkBase>> BannedChunkClasses;
+
+	UPROPERTY()
+	ADoungeonChunkBase* LastSpawnedChunk;
+
+	UPROPERTY()
+	TArray<ADoungeonChunkBase*> SpawnedChunks;
+
+	UPROPERTY()
+	int32 ChunksAmount;
 };

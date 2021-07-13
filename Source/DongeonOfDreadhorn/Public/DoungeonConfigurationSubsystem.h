@@ -14,6 +14,7 @@ class DONGEONOFDREADHORN_API UDoungeonConfigurationSubsystem : public UGameInsta
 	GENERATED_BODY()
 
 public:
+	// TODO: Save settings after set
 	UFUNCTION(BlueprintCallable)
 	void ChangeConfiguration(FDungeonConfiguration NewConfiguration);
 

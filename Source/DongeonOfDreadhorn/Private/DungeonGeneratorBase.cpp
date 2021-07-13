@@ -2,6 +2,8 @@
 
 
 #include "DungeonGeneratorBase.h"
+
+#include "DoungeonConfigurationSubsystem.h"
 #include "Engine/World.h"
 
 // Sets default values
@@ -14,6 +16,8 @@ void ADungeonGeneratorBase::BeginPlay()
 {
 	Super::BeginPlay();
 
+	//Setup();
+	
 	SpawnChunk();
 }
 
@@ -24,16 +28,18 @@ void ADungeonGeneratorBase::SpawnChunk()
 	bool bFoundValidSpawnTransform = false;
 	bool bLasChunk = false;	
 
-	if (ChunksAmount == ChunksToSpawn)
+	auto DungeonConfigurationSubsystem = GetGameInstance()->GetSubsystem<UDoungeonConfigurationSubsystem>();
+	
+	if (ChunksAmount == DungeonConfigurationSubsystem->Configuration.Length)
 	{
 		bLasChunk = true;
-		ChunkClass = ExitChunkClass;
+		ChunkClass = DungeonConfigurationSubsystem->Configuration.ExitChunkClass.LoadSynchronous();
 	}
 
 	if (LastSpawnedChunk == nullptr)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("LastSpawnedChunk is NOT valid. Need to Spawn Entrance."));
-		ChunkClass = EntranceChunkClass;
+		ChunkClass = DungeonConfigurationSubsystem->Configuration.EntranceChunkClass.LoadSynchronous();
 		SpawnTansform.SetLocation(FVector::ZeroVector);
 		bFoundValidSpawnTransform = true;		
 	}
@@ -42,16 +48,18 @@ void ADungeonGeneratorBase::SpawnChunk()
 		//UE_LOG(LogTemp, Warning, TEXT("LastSpawnedChunk is valid. Getting snap transform."));
 		if (bLasChunk)
 		{
-			ChunkClass = ExitChunkClass;
+			ChunkClass = DungeonConfigurationSubsystem->Configuration.ExitChunkClass.LoadSynchronous();
 		}
 		else
 		{
 			TArray<TSubclassOf<ADoungeonChunkBase>> ChunksPool;
-			for (auto Chunk : ChunkClasses)
+			for (auto Chunk : DungeonConfigurationSubsystem->Configuration.ChunkClasses)
 			{
-				if (!BannedChunkClasses.Contains(Chunk))
+				auto LoadedChunk = Chunk.LoadSynchronous();
+				
+				if (!BannedChunkClasses.Contains(LoadedChunk))
 				{
-					ChunksPool.Add(Chunk);
+					ChunksPool.Add(LoadedChunk);
 				}
 			}
 			//ChunksPool.Remove(LastSpawnedChunk->GetClass());
@@ -130,7 +138,7 @@ void ADungeonGeneratorBase::SpawnChunk()
 	{
 		// Change chunk class and retry 
 		BannedChunkClasses.Add(ChunkClass);
-		if (BannedChunkClasses.Num() < ChunkClasses.Num())
+		if (BannedChunkClasses.Num() < DungeonConfigurationSubsystem->Configuration.ChunkClasses.Num())
 		{
 			SpawnChunk();
 		}		
@@ -147,46 +155,18 @@ void ADungeonGeneratorBase::PlaceDeadEnds()
 }
 
 void ADungeonGeneratorBase::PlaceEventTriggers()
-{
-	int32 EventTriggersAmount = 0;
-	int32 IterationsCount = 0;
-	TArray <ADoungeonChunkBase*> ValidChunks = SpawnedChunks;
-	ValidChunks.RemoveAt(0);
-	ValidChunks.RemoveAt(ValidChunks.Num() - 1);
-	
+{	
+	auto DungeonConfigurationSubsystem = GetGameInstance()->GetSubsystem<UDoungeonConfigurationSubsystem>();	
 	int32 ChunkIndex = 0;
-	int32 Step = 10;
-	int32 MaxIterations = ValidChunks.Num() / Step;
 
-	for (int32 i = 0; i < MaxIterations; i++)
+	//-1 to exclude exit chunk
+	int32 Step = (DungeonConfigurationSubsystem->Configuration.Length - 1) / DungeonConfigurationSubsystem->Configuration.EventTriggersSpawnAmount;	
+	
+	for (int32 i = 0; i < DungeonConfigurationSubsystem->Configuration.EventTriggersSpawnAmount; i++)
 	{
 		ChunkIndex += Step;
-		ValidChunks[ChunkIndex]->SpawnEventTrigger();
+		SpawnedChunks[ChunkIndex]->SpawnEventTrigger();
 	}
-	
-	/*while(EventTriggersAmount < EventTriggersToSpawn && IterationsCount < SpawnedChunks.Num() - 3)
-	{
-
-		
-		int32 ChunkIndex = FMath::RandRange(0, ValidChunks.Num() - 1);
-		if (ValidChunks[ChunkIndex]->GetCanSpawnEventTriggers())
-		{
-			if (ValidChunks[ChunkIndex]->SpawnEventTrigger())
-			{
-				EventTriggersAmount++;
-			}
-			else
-			{
-				UE_LOG(LogTemp, Warning, TEXT("Chunk: %s FAILED to spawn event triggers"), *ValidChunks[ChunkIndex]->GetHumanReadableName());
-			}
-		}
-		else
-		{
-			UE_LOG(LogTemp, Warning, TEXT("Chunk: %s is not able to spawn event triggers"), *ValidChunks[ChunkIndex]->GetHumanReadableName());
-		}
-		ValidChunks.RemoveAt(ChunkIndex);
-		IterationsCount++;
-	}*/
 }
 
 void ADungeonGeneratorBase::PlaceSecretRooms()
@@ -226,10 +206,10 @@ void ADungeonGeneratorBase::Reset()
 	{
 		Chunk->Disappear();
 	}
+	
 	SpawnedChunks.Empty();
 
-	SpawnChunk();
-	
+	SpawnChunk();	
 }
 
 

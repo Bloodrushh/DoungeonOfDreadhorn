@@ -207,10 +207,10 @@ struct FDungeonConfiguration
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
 	int32 Length;
 
-	// used to determine amount of triggers to spawn by formula: Length / EventTriggersStep.
+	// used to determine amount of triggers to spawn by formula: Length - entrance - exit / EventTriggersStep.
 	// example: 95 / 10 = 9. This means that triggers will spawn every 9 chunks
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
-	int32 EventTriggersSpawnStep;
+	int32 EventTriggersSpawnAmount;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
 	TArray<TSoftClassPtr<ADoungeonChunkBase>> ChunkClasses;

@@ -170,8 +170,11 @@ void ADoungeonChunkBase::GetDeadExits(TArray<USceneComponent*>& OutExits)
 		{
 			// this fixes problem when dead ends could not spawn back to back with other wall
 			TraceEnd = TraceStart + (-Exit->GetComponentRotation().Vector() * 250.0f);
-			DrawDebugLine(GetWorld(), TraceStart, TraceEnd, FColor::Blue, false, 55.0f, 0, 1);
+
+			//DrawDebugLine(GetWorld(), TraceStart, TraceEnd, FColor::Blue, false, 55.0f, 0, 1);
+
 			bHit = GetWorld()->LineTraceSingleByObjectType(HitResult, TraceStart, TraceEnd, ObjectQueryParams, QueryParams);
+
 			if(bHit)
 			{
 				OutExits.Add(Exit);
