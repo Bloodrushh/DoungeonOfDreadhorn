@@ -4,6 +4,7 @@
 #include "BoardPawnHand.h"
 #include "CoreMinimal.h"
 #include "GameFramework/Pawn.h"
+
 #include "BoardPawn.generated.h"
 
 class UCameraComponent;
@@ -21,7 +22,7 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
-public:	
+public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
@@ -29,24 +30,28 @@ public:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-		USceneComponent* VrOrigin;
+	USceneComponent* VrOrigin;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-		UCameraComponent* Camera;
+	UCameraComponent* Camera;
 
 	UPROPERTY(EditDefaultsOnly)
-		TSubclassOf<ABoardPawnHand> HandClass;
+	TSubclassOf<ABoardPawnHand> HandClass;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-		ABoardPawnHand* LeftHand;
+	ABoardPawnHand* LeftHand;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-		ABoardPawnHand* RightHand;
-	
+	ABoardPawnHand* RightHand;
+
 	void GrabRight();
 	void DropRight();
 	void GrabLeft();
 	void DropLeft();
+
+	virtual void PossessedBy(AController* NewController) override;
+
+	virtual void UnPossessed() override;
 
 	void DisableControllers();
 	void EnableControllers();

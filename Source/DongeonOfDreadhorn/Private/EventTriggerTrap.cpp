@@ -2,8 +2,3 @@
 
 
 #include "EventTriggerTrap.h"
-
-void AEventTriggerTrap::OnEventProcessed(int32 DeterminedValue, APlayerPawn*& InPlayerPawn)
-{
-	Super::OnEventProcessed(DeterminedValue, InPlayerPawn);
-}

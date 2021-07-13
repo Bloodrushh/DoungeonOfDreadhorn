@@ -10,7 +10,7 @@
 ATableBase::ATableBase()
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.	
-	PrimaryActorTick.bCanEverTick = true;
+	PrimaryActorTick.bCanEverTick = false;
 	RootComponent = CreateDefaultSubobject<USceneComponent>(TEXT("RootComponent"));
 	TestEventWindow = CreateDefaultSubobject<UWidgetComponent>(TEXT("TestEventInfo"));
 	TestEventWindow->SetupAttachment(RootComponent);
@@ -21,31 +21,8 @@ ATableBase::ATableBase()
 void ATableBase::BeginPlay()
 {
 	Super::BeginPlay();
-	
-	DODPlayerController = Cast<ADODPlayerController>(UGameplayStatics::GetPlayerController(this, 0));
-//PlayerPawn = Cast<APlayerPawn>(UGameplayStatics::GetPlayerPawn(this, 0));	
-	GenerateCharactersPool();
-
-	for(auto Character: Characters)
-	{
-		if(PlayerPawn)
-		{
-			int32 Index;
-			PlayerPawn->AddCharacterToParty(Character, Index);
-		}
-		else
-		{
-			UE_LOG(LogTemp, Warning, TEXT("@donkey@ Character: %s %s"), *Character.GeneralInfo.FirstName.ToString(), *Character.GeneralInfo.SecondName.ToString());
-		}
-	}
 }
 
-// Called every frame
-void ATableBase::Tick(float DeltaTime)
-{
-	Super::Tick(DeltaTime);
-
-}
 
 void ATableBase::GetBounce(float & OutMaxX, float & OutMinX, float & OutMaxY, float & OutMinY)
 {
@@ -59,10 +36,10 @@ void ATableBase::GetBounce(float & OutMaxX, float & OutMinX, float & OutMaxY, fl
 void ATableBase::StartEvent(FEventInfo EventInfo, const FOnEventProcessed Callback)
 {
 	Cast<UEventWidget>(TestEventWindow->GetUserWidgetObject())->DisplayEvent(EventInfo);
-	Callback.ExecuteIfBound(TESTDeterminedValue, PlayerPawn);	
+	//Callback.ExecuteIfBound(TESTDeterminedValue);	
 
 	// Uncomment below then test is over
-	/*if (Dice)
+	if (Dice)
 	{
 		Dice->Reset();
 		Dice->OnValueDetermined.BindUObject(this, &ATableBase::OnValueDetermined, EventInfo, Callback);		
@@ -70,27 +47,17 @@ void ATableBase::StartEvent(FEventInfo EventInfo, const FOnEventProcessed Callba
 	else
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Dice is invalid"));
-	}*/
-
-	/*if(PlayerPawn)
-	{
-		PlayerPawn bCanMove = false
-	}	
-	if (DODPlayerController)
-	{
-		DODPlayerController->TravelToBoard();
-	}*/
+	}
 }
 
 void ATableBase::OnValueDetermined(int32 Value, FEventInfo EventInfo, const FOnEventProcessed Callback)
 {
 	UE_LOG(LogTemp, Warning, TEXT("DeterminedValue: %d"), Value);		
 	
-	Callback.ExecuteIfBound(Value, PlayerPawn);
-	// PlayerPawn bCanMove = true
-	DODPlayerController->TravelToDungeon();
+	Callback.ExecuteIfBound(Value);	
 }
 
+// wtf is this. Why is it here
 void ATableBase::GenerateCharactersPool()
 {
 	Characters.Empty();
@@ -115,6 +82,7 @@ void ATableBase::GenerateCharactersPool()
 	}
 }
 
+// wtf is this. Why is it here
 bool ATableBase::GetRandomName(ERace Race, EGender Gender, FText& OutFirstName, FText& OutSecondName)
 {
 	if(!CharactersNamesDT)

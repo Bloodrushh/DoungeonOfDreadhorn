@@ -1,12 +1,14 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #pragma once
-#include "TableBase.h"
-#include "ProjectTypes.h"
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "ProjectTypes.h"
+#include "TableBase.h"
+
 #include "EventTriggerBase.generated.h"
 
+class ADungeonManager;
 class AEnemyBase;
 class ADoungeonChunkBase;
 
@@ -14,72 +16,69 @@ UCLASS()
 class DONGEONOFDREADHORN_API AEventTriggerBase : public AActor
 {
 	GENERATED_BODY()
-	
-public:	
+
+public:
 	// Sets default values for this actor's properties
 	AEventTriggerBase();
+
+	UPROPERTY(BlueprintReadOnly, meta = (ExposeOnSpawn = true))
+	TArray<USceneComponent*> ChestSpawnPoints;
+
+	UPROPERTY(BlueprintReadOnly)
+	bool bIsTriggered = false;
+
+	FOnEventProcessed OnEventProcessedDelegate;
+
+	UPROPERTY(BlueprintReadOnly)
+	bool bEventResult = false;
+
+	UPROPERTY(BlueprintReadOnly, meta = (ExposeOnSpawn = true))
+	APlayerPawn* PlayerPawn;
+
+	UPROPERTY(BlueprintReadOnly,  meta = (ExposeOnSpawn = true))
+	ADungeonManager* DungeonManager;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	FEventInfo EventInfo;
+
+	UPROPERTY(BlueprintReadOnly, meta = (ExposeOnSpawn = true))
+	ADoungeonChunkBase* Chunk;
 
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
+	
+	bool TargetIsOnLineOfSight(AActor* InTarget);	
+	
 
-public:	
+public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
-	
-	virtual void NotifyActorBeginOverlap(AActor* OtherActor) override;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-		FEventInfo EventInfo;
+	virtual void NotifyActorBeginOverlap(AActor* OtherActor) override;	
 
-	UPROPERTY(BlueprintReadOnly, meta = (ExposeOnSpawn = true))
-		TArray<USceneComponent*> EnemySpawnPoints;
-
-	UPROPERTY(BlueprintReadOnly, meta = (ExposeOnSpawn = true))
-		TArray<USceneComponent*> ChestSpawnPoints;
-
-	virtual void OnConstruction(const FTransform& Transform) override;
+	virtual void OnConstruction(const FTransform& Transform) override;		
 
 	UFUNCTION(BlueprintCallable)
-		bool TargetIsOnLineOfSight(AActor* InTarget);
+	void SetIsTriggered(bool bTriggered);	
 
-	void OnEventFinished();
-	
-	void OnEventStarted();
-
-	UPROPERTY(BlueprintReadOnly)
-		bool bIsTriggered = false;
-
-	UFUNCTION(BlueprintCallable)
-		void SetIsTriggered(bool bTriggered);
-	
-	UPROPERTY(BlueprintReadOnly, meta = (ExposeOnSpawn = true))
-		ADoungeonChunkBase* Chunk;
-
-	UFUNCTION(BlueprintCallable)
-		void OnTriggered(AActor* TriggeredActor);
-
-	FOnEventProcessed OnEventProcessedDelegate;
+	UFUNCTION(BlueprintNativeEvent)
+	void OnTriggered(AActor* TriggeredActor);	
+	void OnTriggered_Implementation(AActor* TriggeredActor);
 
 	UFUNCTION()
-		virtual void OnEventProcessed(int32 DeterminedValue, APlayerPawn*& InPlayerPawn);
-
+	void OnEventProcessed(int32 DeterminedValue);
 	UFUNCTION(BlueprintImplementableEvent)
-		void OnEventProcessedBP(bool bResult, int32 Difference);
+	void OnEventProcessedBP(bool Result, int32 DeterminedValue);	
 
-	UFUNCTION(BlueprintCallable)
-		void FinishEvent();
+	UFUNCTION(BlueprintNativeEvent)
+	void FinishEvent(bool Succeed);
+	void FinishEvent_Implementation(bool Succeed);
 
-	UFUNCTION(BlueprintImplementableEvent)
-		void OnEventFinishedBP();
-	
-	UPROPERTY(BlueprintReadOnly)
-		bool bEventResult = false;
-
-	UPROPERTY(BlueprintReadOnly)
-		APlayerPawn* PlayerPawn;
+	UFUNCTION(BlueprintNativeEvent)
+	void Disappear();
+	void Disappear_Implementation();
+;	
 };
-
-
 
 

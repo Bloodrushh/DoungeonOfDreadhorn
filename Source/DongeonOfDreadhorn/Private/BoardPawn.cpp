@@ -23,13 +23,7 @@ ABoardPawn::ABoardPawn()
 // Called when the game starts or when spawned
 void ABoardPawn::BeginPlay()
 {
-	Super::BeginPlay();
-
-	ADODPlayerController* DODPlayerController = Cast<ADODPlayerController>(UGameplayStatics::GetPlayerController(this, 0));
-	if (DODPlayerController)
-	{
-		DODPlayerController->SetBoardPawnReference(this);
-	}
+	Super::BeginPlay();	
 	
 	UHeadMountedDisplayFunctionLibrary::SetTrackingOrigin(EHMDTrackingOrigin::Floor);
 
@@ -85,6 +79,18 @@ void ABoardPawn::GrabLeft()
 void ABoardPawn::DropLeft()
 {
 	LeftHand->Drop();
+}
+
+void ABoardPawn::PossessedBy(AController* NewController)
+{
+	Super::PossessedBy(NewController);
+	EnableControllers();
+}
+
+void ABoardPawn::UnPossessed()
+{
+	Super::UnPossessed();
+	DisableControllers();
 }
 
 void ABoardPawn::DisableControllers()

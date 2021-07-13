@@ -2,7 +2,10 @@
 
 
 #include "EnemyBase.h"
-#include "EventTriggerFight.h"
+#include "PlayerPawn.h"
+#include "DoungeonConfigurationSubsystem.h"
+#include "FightManager.h"
+#include "Kismet/GameplayStatics.h"
 
 // Sets default values
 AEnemyBase::AEnemyBase()
@@ -33,18 +36,73 @@ void AEnemyBase::Tick(float DeltaTime)
 
 void AEnemyBase::Die()
 {
-	//AEventTriggerFight* EventTriggerFight = Cast<AEventTriggerFight>(EventTrigger);
-	if (AEventTriggerFight* EventTriggerFight = Cast<AEventTriggerFight>(EventTrigger)) { EventTriggerFight->OnEnemyDied(this); }
+	FightManager->OnParticipantDied(this);
 	void OnDiedBP();
 }
 
 void AEnemyBase::TakeDamage(int32 Amount, EAttack Attack)
-{
+{		
 	OnDamageTakenBP(Amount, Attack);
+	Health -= Amount;
+	if (Health <= 0)
+	{
+		Die();
+	}
 }
 
 bool AEnemyBase::CanTakeDamage()
 {	
 	return false;
+}
+
+void AEnemyBase::PerformMove()
+{
+	UE_LOG(LogTemp, Warning, TEXT("AEnemyBase::PerformMove called"));
+	// TODO Should randomise move type
+	EMoveType Move =  EMoveType::Attack;
+
+	switch (Move)
+	{
+	case EMoveType::None:
+		break;
+	case EMoveType::Attack:
+		ToggleAttackNotifaction(true);
+		StartAttack_Delayed();
+		break;
+	case EMoveType::Buff:
+		break;
+	default:
+		break;		
+	}	
+}
+
+void AEnemyBase::OnMovePerformed()
+{
+	FightManager->OnMovePerformed(this);
+}
+
+void AEnemyBase::FinishAttack()
+{
+	UE_LOG(LogTemp, Warning, TEXT("AEnemyBase::FinishAttack called"));
+	ToggleAttackNotifaction(false);
+	
+	if(!PlayerPawn){ return; }
+	
+	PlayerPawn->TakeDamage(Damage, AttackType);	
+	OnMovePerformed();
+}
+
+void AEnemyBase::StartAttack_Delayed()
+{
+	float DelayBeforeAttack = GetGameInstance()->GetSubsystem<UDoungeonConfigurationSubsystem>()->Configuration.DelayBeforeEnemyAttack;
+	UE_LOG(LogTemp, Warning, TEXT("AEnemyBase::StartAttack_Delayed called. Delat: %f"), DelayBeforeAttack);
+
+	GetWorldTimerManager().SetTimer(PerformAttackTimerHandle, this, &AEnemyBase::StartAttack, DelayBeforeAttack);
+}
+
+int32 AEnemyBase::GetInitiative()
+{
+	UE_LOG(LogTemp, Warning, TEXT("AEnemyBase::GetInitiative: %d"), Initiative);
+	return Initiative;
 }
 

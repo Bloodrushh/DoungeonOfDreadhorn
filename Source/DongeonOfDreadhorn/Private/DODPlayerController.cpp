@@ -3,58 +3,52 @@
 
 #include "DODPlayerController.h"
 #include "TimerManager.h"
+#include "PlayerPawn.h"
+#include "BoardPawn.h"
 
-void ADODPlayerController::SetBoardPawnReference(ABoardPawn* BoardPawnRef)
+void ADODPlayerController::SetupPawnReferences(APlayerPawn* InPlayerPawn, ABoardPawn* InBoardPawn)
 {
-	BoardPawn = BoardPawnRef;
+	PlayerPawn = InPlayerPawn;
+	BoardPawn = InBoardPawn;
 }
 
-void ADODPlayerController::SetPlayerPawnReference(APlayerPawn * PlayerPawnRef)
+void ADODPlayerController::MakeTransitionFromBoardToFight(FVector Location)
 {
-	PlayerPawn = PlayerPawnRef;
-}
-
-void ADODPlayerController::TravelToBoard()
-{
-	if (BoardPawn && GetPawn() != BoardPawn)
+	FadeIn();
+	GetWorldTimerManager().SetTimer(TeleportIntoFightHandle, FTimerDelegate::CreateLambda([this, Location]()
 	{
-		PendingPawnToPosses = BoardPawn;
-		PlayerCameraManager->StartCameraFade(0, 1, CameraFadeTime, FLinearColor::Black, false, true);
-		PossessPendingPawn_Delayed();
-	}
+		Possess(PlayerPawn);
+		PlayerPawn->TeleportIntoFight(Location);
+		FadeOut();
+	}),TeleportDelay, false, TeleportDelay);
 }
 
-void ADODPlayerController::TravelToDungeon()
+void ADODPlayerController::MakeTransitionFromBoardToDungeon()
 {
-	if (PlayerPawn && GetPawn() != PlayerPawn)
+	FadeIn();
+	GetWorldTimerManager().SetTimer(TeleportIntoFightHandle, FTimerDelegate::CreateLambda([this]()
 	{
-		PendingPawnToPosses = PlayerPawn;
-		PlayerCameraManager->StartCameraFade(0, 1, CameraFadeTime, FLinearColor::Black, false, true);
-		PossessPendingPawn_Delayed();
-	}
+		Possess(PlayerPawn);
+		FadeOut();
+	}),TeleportDelay, false, TeleportDelay);
 }
 
-void ADODPlayerController::PossessPendingPawn_Delayed()
+void ADODPlayerController::MakeTransitionFromDungeonToBoard()
 {
-	GetWorldTimerManager().SetTimer(PossessPendingPawnHandle, this, &ADODPlayerController::PossessPendingPawn, PossessDelay, false);
-}
-
-void ADODPlayerController::PossessPendingPawn()
-{
-	GetWorldTimerManager().ClearTimer(PossessPendingPawnHandle);
-	if (PendingPawnToPosses)
+	FadeIn();
+	GetWorldTimerManager().SetTimer(TeleportIntoFightHandle, FTimerDelegate::CreateLambda([this]()
 	{
-		if (PendingPawnToPosses == PlayerPawn)
-		{
-			PlayerPawn->DisableControllers();
-			BoardPawn->EnableControllers();
-		}
-		else
-		{
-			BoardPawn->DisableControllers();
-			PlayerPawn->EnableControllers();
-		}
-		Possess(PendingPawnToPosses);
-		PlayerCameraManager->StartCameraFade(1, 0, CameraFadeTime, FLinearColor::Black, false, false);
-	}
+		Possess(BoardPawn);
+		FadeOut();
+	}),TeleportDelay, false, TeleportDelay);
+}
+
+void ADODPlayerController::MakeTransitionFromFightToDungeon()
+{
+	FadeIn();
+	GetWorldTimerManager().SetTimer(TeleportIntoFightHandle, FTimerDelegate::CreateLambda([this]()
+	{
+		PlayerPawn->TeleportIntoDungeon();
+		FadeOut();
+	}),TeleportDelay, false, TeleportDelay);
 }

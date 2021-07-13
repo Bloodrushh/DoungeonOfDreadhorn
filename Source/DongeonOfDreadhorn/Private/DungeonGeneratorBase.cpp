@@ -74,7 +74,9 @@ void ADungeonGeneratorBase::SpawnChunk()
 	if (bFoundValidSpawnTransform)
 	{
 		//UE_LOG(LogTemp, Warning, TEXT("Successfully got snap transform: x= %f, y= %f, z= %f. Trying to spawn chunk class: %s"), SpawnTansform.GetLocation().X, SpawnTansform.GetLocation().Y, SpawnTansform.GetLocation().Z, *ChunkClass.Get()->GetName());
-		SpawnedChunk = GetWorld()->SpawnActor<ADoungeonChunkBase>(ChunkClass, SpawnTansform, SpawnParams);		
+		SpawnedChunk = GetWorld()->SpawnActor<ADoungeonChunkBase>(ChunkClass, SpawnTansform, SpawnParams);
+		SpawnedChunk->SetDungeonManager(DungeonManager);
+		SpawnedChunk->SetPlayerPawn(PlayerPawn);
 	}
 	else
 	{
@@ -88,6 +90,8 @@ void ADungeonGeneratorBase::SpawnChunk()
 				//UE_LOG(LogTemp, Warning, TEXT("Successfully got snap transform from previous chunk: %s, transform: x=%f, y=%f, z=%f"), *SpawnedChunks[i]->GetHumanReadableName(), SpawnTansform.GetLocation().X, SpawnTansform.GetLocation().Y, SpawnTansform.GetLocation().Z);
 				LastSpawnedChunk = SpawnedChunks[i];
 				SpawnedChunk = GetWorld()->SpawnActor<ADoungeonChunkBase>(ChunkClass, SpawnTansform, SpawnParams);
+				SpawnedChunk->SetDungeonManager(DungeonManager);
+				SpawnedChunk->SetPlayerPawn(PlayerPawn);
 				break;
 			}
 		};
@@ -149,9 +153,21 @@ void ADungeonGeneratorBase::PlaceEventTriggers()
 	TArray <ADoungeonChunkBase*> ValidChunks = SpawnedChunks;
 	ValidChunks.RemoveAt(0);
 	ValidChunks.RemoveAt(ValidChunks.Num() - 1);
+	
+	int32 ChunkIndex = 0;
+	int32 Step = 10;
+	int32 MaxIterations = ValidChunks.Num() / Step;
 
-	while(EventTriggersAmount < EventTriggersToSpawn && IterationsCount < SpawnedChunks.Num()-3)
+	for (int32 i = 0; i < MaxIterations; i++)
 	{
+		ChunkIndex += Step;
+		ValidChunks[ChunkIndex]->SpawnEventTrigger();
+	}
+	
+	/*while(EventTriggersAmount < EventTriggersToSpawn && IterationsCount < SpawnedChunks.Num() - 3)
+	{
+
+		
 		int32 ChunkIndex = FMath::RandRange(0, ValidChunks.Num() - 1);
 		if (ValidChunks[ChunkIndex]->GetCanSpawnEventTriggers())
 		{
@@ -170,7 +186,7 @@ void ADungeonGeneratorBase::PlaceEventTriggers()
 		}
 		ValidChunks.RemoveAt(ChunkIndex);
 		IterationsCount++;
-	}
+	}*/
 }
 
 void ADungeonGeneratorBase::PlaceSecretRooms()
@@ -202,6 +218,18 @@ void ADungeonGeneratorBase::PlaceSecretRooms()
 		ValidChunks.RemoveAt(ChunkIndex);
 		IterationsCount++;
 	}*/
+}
+
+void ADungeonGeneratorBase::Reset()
+{
+	for (auto Chunk :SpawnedChunks)
+	{
+		Chunk->Disappear();
+	}
+	SpawnedChunks.Empty();
+
+	SpawnChunk();
+	
 }
 
 

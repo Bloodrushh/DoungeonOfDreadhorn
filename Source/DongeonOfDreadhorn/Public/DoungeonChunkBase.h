@@ -1,19 +1,22 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #pragma once
-#include "DungeonChunkBoardBase.h"
 #include "CoreMinimal.h"
+#include "DungeonChunkBoardBase.h"
 #include "GameFramework/Actor.h"
+
 #include "DoungeonChunkBase.generated.h"
 
+class APlayerPawn;
+class ADungeonManager;
 class AEventTriggerBase;
 
 UCLASS()
 class DONGEONOFDREADHORN_API ADoungeonChunkBase : public AActor
 {
 	GENERATED_BODY()
-	
-public:	
+
+public:
 	// Sets default values for this actor's properties
 	ADoungeonChunkBase();
 
@@ -21,94 +24,80 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
-public:	
+public:
+	UPROPERTY()
+	TArray<USceneComponent*> PossibleExits;
 
 	UPROPERTY()
-		TArray<USceneComponent*> PossibleExits;
+	TArray<USceneComponent*> ValidExits;
 
-	UPROPERTY()
-		TArray<USceneComponent*> ValidExits;
+	UPROPERTY(EditDefaultsOnly)
+	TSubclassOf<ADoungeonChunkBase> DeadEndChunkClass;	
+
+	UPROPERTY(EditDefaultsOnly)
+	FName ExitSnapPointTag = TEXT("ExitSnapPoint");
+
+	UPROPERTY(EditDefaultsOnly)
+	FName FloorTag = TEXT("FloorSnapPoint");		
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	TArray<UStaticMeshComponent*> Floors;	
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	TArray<ADungeonChunkBoardBase*> BoardChunks;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	bool bVisited = false;	
+
+	UPROPERTY(EditDefaultsOnly)
+	bool CanSpawnEventTriggers = false;
+
+	UPROPERTY(EditDefaultsOnly)
+	TArray<TSoftClassPtr<AEventTriggerBase>> EventTriggerClasses;
 
 	UPROPERTY(BlueprintReadOnly)
-		TArray<USceneComponent*> EnemySpawnPoints;
+	TArray<AEventTriggerBase*> EventTriggers;		
 
-	UPROPERTY()
-		TArray<USceneComponent*> ChestSpawnPoints;
+	UPROPERTY(BlueprintReadOnly)
+	APlayerPawn* PlayerPawn;
 
-	UPROPERTY(EditDefaultsOnly)
-		TSubclassOf<ADoungeonChunkBase> DeadEndChunkClass;
-	
-		void UpdateValidExits();
+	UPROPERTY(BlueprintReadOnly)
+	ADungeonManager* DungeonManager;
 
 	UFUNCTION(BlueprintCallable)
-		bool TryGetSpawnTransformForChunk(TSubclassOf<ADoungeonChunkBase> SpawningChunkClass, FTransform & OutTransform);
-
-		void FindAndChachePossibleExits();
-
-	UPROPERTY(EditDefaultsOnly)
-		FName ExitSnapPointTag = TEXT("ExitSnapPoint");
-
-	UPROPERTY(EditDefaultsOnly)
-		FName FloorTag = TEXT("FloorSnapPoint");
-
-	UPROPERTY(EditDefaultsOnly)
-		FName ChestSpawnPointTag = TEXT("ChestSpawnPoint");
-
-	UPROPERTY(EditDefaultsOnly)
-		FName EnemySpawnPointTag = TEXT("EnemySpawnPoint");
+	void SetPlayerPawn(APlayerPawn* InPlayerPawn);
 
 	UFUNCTION(BlueprintCallable)
-		void GetPossibleExits(TArray<USceneComponent*>& OutPossibleExits);
+	void SetDungeonManager(ADungeonManager* InDungeonManager);
 
-	void PlaceDeadEnds();
+protected:
+	void FindAndCacheFloors();	
 
 	void GetDeadExits(TArray<USceneComponent*>& OutExits);
 
 	void GetFloorsFromChunkClass(TSubclassOf<ADoungeonChunkBase> ChunkClass, TArray<USceneComponent*>& OutFloors);
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-		TArray<UStaticMeshComponent*> Floors;
+	void UpdateValidExits();	
 
-	UFUNCTION(BlueprintCallable)
-		void OnVisited();
+	void FindAndCachePossibleExits();
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-		TArray<ADungeonChunkBoardBase*> BoardChunks;
+	void GetPossibleExits(TArray<USceneComponent*>& OutPossibleExits);
+
+	bool GetCanSpawnEventTriggers();	
+		
+public:
+	UFUNCTION(BlueprintNativeEvent)
+	void Disappear();
+	void Disappear_Implementation();
+
+	void PlaceDeadEnds();
+
+	bool TryGetSpawnTransformForChunk(TSubclassOf<ADoungeonChunkBase> SpawningChunkClass, FTransform& OutTransform);
 
 	void AddBoardChunk(ADungeonChunkBoardBase* NewBoardChunk);
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-		bool bVisited = false;
-
-	void FindAndCacheEnemySpawnPoints();
-
-	void FindAndCacheChestSpawnPoints();
-
-	void FindAndCacheFloors();
-
-	UPROPERTY(EditDefaultsOnly)
-		bool CanSpawnEventTriggers = false;
-
-	UPROPERTY(EditDefaultsOnly)
-		TArray<TSubclassOf<AEventTriggerBase>> EventTriggers;
-
-	bool GetCanSpawnEventTriggers();
-
 	bool SpawnEventTrigger();
-
-	UPROPERTY(EditDefaultsOnly)
-		TSubclassOf<ADoungeonChunkBase> ExitBlockerClass;
 	
-	TArray<ADoungeonChunkBase*> ExitBlockers;
-
 	UFUNCTION(BlueprintCallable)
-		void CloseExits();
-
-	UFUNCTION(BlueprintCallable)
-		void OpenExits();
-
-	void Disappear();
-
-	UFUNCTION(BlueprintImplementableEvent)
-		void DisappearBP();
+	void OnVisited();
 };

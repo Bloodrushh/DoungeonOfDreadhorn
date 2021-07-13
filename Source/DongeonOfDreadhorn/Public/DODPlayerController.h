@@ -1,12 +1,13 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #pragma once
-#include "PlayerPawn.h"
-#include "BoardPawn.h"
 #include "CoreMinimal.h"
 #include "GameFramework/PlayerController.h"
+
 #include "DODPlayerController.generated.h"
 
+class APlayerPawn;
+class ABoardPawn;
 /**
  * 
  */
@@ -16,35 +17,39 @@ class DONGEONOFDREADHORN_API ADODPlayerController : public APlayerController
 	GENERATED_BODY()
 
 public:
-
-	void SetBoardPawnReference(ABoardPawn* BoardPawnRef);
-
-	void SetPlayerPawnReference(APlayerPawn* PlayerPawnRef);
-
 	UPROPERTY()
-		ABoardPawn* BoardPawn;
-
-	UPROPERTY()
-		APlayerPawn* PlayerPawn;
-
-	UFUNCTION(BlueprintCallable)
-	void TravelToBoard();
-
-	UFUNCTION(BlueprintCallable)
-	void TravelToDungeon();
-
-	APawn* PendingPawnToPosses;
-
-	void PossessPendingPawn_Delayed();
+	APawn* PendingPawn;
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
+	float TeleportDelay = 2.0f;
 
 	FTimerHandle PossessPendingPawnHandle;
 
-	void PossessPendingPawn();
+	FTimerHandle TeleportIntoFightHandle;
 
-	UPROPERTY(EditDefaultsOnly)
-		float CameraFadeTime = 1.0f;
+	FVector PendingTeleportLocation;
 
-	UPROPERTY(EditDefaultsOnly)
-		float PossessDelay = 2.0f;
-	
+	UPROPERTY()
+	APlayerPawn* PlayerPawn;
+
+	UPROPERTY()
+	ABoardPawn* BoardPawn;
+
+protected:
+	UFUNCTION(BlueprintImplementableEvent)
+	void FadeIn();
+
+	UFUNCTION(BlueprintImplementableEvent)
+	void FadeOut();
+
+public:
+	void SetupPawnReferences(APlayerPawn* InPlayerPawn, ABoardPawn* InBoardPawn);
+
+	void MakeTransitionFromBoardToFight(FVector Location);
+
+	void MakeTransitionFromBoardToDungeon();
+
+	void MakeTransitionFromDungeonToBoard();
+
+	void MakeTransitionFromFightToDungeon();
 };

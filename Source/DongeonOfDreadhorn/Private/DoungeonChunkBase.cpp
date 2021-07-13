@@ -18,13 +18,11 @@ void ADoungeonChunkBase::BeginPlay()
 {
 	Super::BeginPlay();
 	
-	FindAndChachePossibleExits();
+	FindAndCachePossibleExits();
 	UpdateValidExits();
 	//UE_LOG(LogTemp, Warning, TEXT("BeginPlay"));
 	//GetComponents<UStaticMeshComponent>()
 	FindAndCacheFloors();
-	FindAndCacheChestSpawnPoints();
-	FindAndCacheEnemySpawnPoints();	
 }
 
 void ADoungeonChunkBase::UpdateValidExits()
@@ -101,7 +99,7 @@ bool ADoungeonChunkBase::TryGetSpawnTransformForChunk(TSubclassOf<ADoungeonChunk
 	return false;
 }
 
-void ADoungeonChunkBase::FindAndChachePossibleExits()
+void ADoungeonChunkBase::FindAndCachePossibleExits()
 {
 	for (auto ChildActoorComponent : GetComponentsByTag(USceneComponent::StaticClass(), ExitSnapPointTag))
 	{
@@ -127,6 +125,7 @@ void ADoungeonChunkBase::PlaceDeadEnds()
 	TArray<USceneComponent*> DeadExits;
 	GetDeadExits(DeadExits);
 	FActorSpawnParameters SpawnParams;
+	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 	for (auto Exit : DeadExits)
 	{	
 		FTransform  SpawnTransform = Exit->GetComponentTransform();
@@ -135,6 +134,10 @@ void ADoungeonChunkBase::PlaceDeadEnds()
 		if(DeadEnd)
 		{
 			PossibleExits.Remove(Exit);
+		}
+		else
+		{
+			UE_LOG(LogTemp, Error, TEXT("@DONKEY@ Could not spawn Deadend"));
 		}
 	}
 }
@@ -155,7 +158,7 @@ void ADoungeonChunkBase::GetDeadExits(TArray<USceneComponent*>& OutExits)
 		FCollisionQueryParams QueryParams;
 		FCollisionObjectQueryParams ObjectQueryParams;
 		FHitResult HitResult;		
-		const bool bHit = GetWorld()->LineTraceSingleByObjectType(HitResult, TraceStart, TraceEnd, ObjectQueryParams, QueryParams);
+		bool bHit = GetWorld()->LineTraceSingleByObjectType(HitResult, TraceStart, TraceEnd, ObjectQueryParams, QueryParams);
 		//const bool bHit = GetWorld()->LineTraceSingleByObjectType(HitResult, TraceStart, TraceEnd, ObjectQueryParams, QuerryParams);
 
 		if (!bHit)
@@ -165,7 +168,16 @@ void ADoungeonChunkBase::GetDeadExits(TArray<USceneComponent*>& OutExits)
 		}
 		else
 		{
-			
+			// this fixes problem when dead ends could not spawn back to back with other wall
+			TraceEnd = TraceStart + (-Exit->GetComponentRotation().Vector() * 250.0f);
+			DrawDebugLine(GetWorld(), TraceStart, TraceEnd, FColor::Blue, false, 55.0f, 0, 1);
+			bHit = GetWorld()->LineTraceSingleByObjectType(HitResult, TraceStart, TraceEnd, ObjectQueryParams, QueryParams);
+			if(bHit)
+			{
+				OutExits.Add(Exit);
+				//UE_LOG(LogTemp, Warning, TEXT("@DONKEY@ Exit: %s"), *Exit->GetReadableName());
+				//DrawDebugLine(GetWorld(), TraceStart, TraceEnd, FColor::Blue, false, 99.0f, 0, 1);
+			}
 			//UE_LOG(LogTemp, Warning, TEXT("Exit: %s is blocked by : %s"), *Exit->GetReadableName(), *HitResult.Actor->GetHumanReadableName());
 
 		}			
@@ -228,34 +240,6 @@ void ADoungeonChunkBase::AddBoardChunk(ADungeonChunkBoardBase * NewBoardChunk)
 	BoardChunks.Add(NewBoardChunk);
 }
 
-void ADoungeonChunkBase::FindAndCacheEnemySpawnPoints()
-{
-	TArray<USceneComponent*> SceneComponents;
-	GetComponents<USceneComponent>(SceneComponents, true);
-	for (auto Component : SceneComponents)
-	{
-		if (Component->ComponentHasTag(EnemySpawnPointTag))
-		{
-			EnemySpawnPoints.Add(Component);			
-		}
-	}
-	//UE_LOG(LogTemp, Warning, TEXT("EnemySpawnPoints.Num(): %d"), EnemySpawnPoints.Num());
-}
-
-void ADoungeonChunkBase::FindAndCacheChestSpawnPoints()
-{
-	TArray<USceneComponent*> SceneComponents;
-	GetComponents<USceneComponent>(SceneComponents, true);
-	for (auto Component : SceneComponents)
-	{
-		if (Component->ComponentHasTag(ChestSpawnPointTag))
-		{
-			ChestSpawnPoints.Add(Component);
-		}
-	}
-	//UE_LOG(LogTemp, Warning, TEXT("EnemySpawnPoints.Num(): %d"), EnemySpawnPoints.Num())
-}
-
 void ADoungeonChunkBase::FindAndCacheFloors()
 {
 	TArray<UStaticMeshComponent*> StaticMeshes;
@@ -274,12 +258,17 @@ void ADoungeonChunkBase::FindAndCacheFloors()
 
 bool ADoungeonChunkBase::GetCanSpawnEventTriggers()
 {
-	return CanSpawnEventTriggers && EventTriggers.Num() > 0;
+	return CanSpawnEventTriggers && EventTriggerClasses.Num() > 0;
 }
 
 bool ADoungeonChunkBase::SpawnEventTrigger()
 {
-	TSubclassOf<AEventTriggerBase> TriggerClass = EventTriggers[FMath::RandRange(0, EventTriggers.Num() - 1)];	
+	if (EventTriggerClasses.Num() <= 0)
+	{
+		return false;
+	}
+	
+	TSubclassOf<AEventTriggerBase> TriggerClass = EventTriggerClasses[FMath::RandRange(0, EventTriggerClasses.Num() - 1)].LoadSynchronous();	
 	if(TriggerClass)
 	{
 		UStaticMeshComponent* TriggerSpawnPoint = Floors[FMath::RandRange(0, Floors.Num() - 1)];
@@ -289,8 +278,10 @@ bool ADoungeonChunkBase::SpawnEventTrigger()
 			AEventTriggerBase* Trigger = GetWorld()->SpawnActorDeferred<AEventTriggerBase>(TriggerClass, SpawnTransform);
 			if (Trigger)
 			{
+				EventTriggers.Add(Trigger);
 				Trigger->Chunk = this;
-				Trigger->EnemySpawnPoints = EnemySpawnPoints;
+				Trigger->PlayerPawn = PlayerPawn;
+				Trigger->DungeonManager = DungeonManager;
 				UGameplayStatics::FinishSpawningActor(Trigger, SpawnTransform);;
 				return true;
 			}
@@ -299,31 +290,21 @@ bool ADoungeonChunkBase::SpawnEventTrigger()
 	return false;
 }
 
-void ADoungeonChunkBase::CloseExits()
+void ADoungeonChunkBase::Disappear_Implementation()
 {
-	for(auto Exit: PossibleExits)
+	for (auto Trigger : EventTriggers)
 	{
-		FVector Location = Exit->GetComponentLocation();
-		FRotator Rotation = Exit->GetComponentRotation();
-		ADoungeonChunkBase* Blocker = GetWorld()->SpawnActor<ADoungeonChunkBase>(ExitBlockerClass, Location, Rotation);
-		if(Blocker)
-		{
-			ExitBlockers.Add(Blocker);
-		}
+		Trigger->Disappear();
 	}
-}
-
-void ADoungeonChunkBase::OpenExits()
-{
-	for(auto Blocker : ExitBlockers)
-	{
-		Blocker->Disappear();
-	}
-	ExitBlockers.Empty();
-}
-
-void ADoungeonChunkBase::Disappear()
-{
-	DisappearBP();
 	Destroy();
+}
+
+void ADoungeonChunkBase::SetPlayerPawn(APlayerPawn* InPlayerPawn)
+{
+	PlayerPawn = InPlayerPawn;
+}
+
+void ADoungeonChunkBase::SetDungeonManager(ADungeonManager* InDungeonManager)
+{
+	DungeonManager = InDungeonManager;
 }

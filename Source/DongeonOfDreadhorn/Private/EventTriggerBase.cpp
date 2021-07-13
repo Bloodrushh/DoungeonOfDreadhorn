@@ -5,8 +5,10 @@
 #include "PlayerPawn.h"
 #include "DrawDebugHelpers.h"
 #include "DoungeonChunkBase.h"
+#include "DungeonManager.h"
 #include "Kismet/GameplayStatics.h"
 #include "TableBase.h"
+
 
 // Sets default values
 AEventTriggerBase::AEventTriggerBase()
@@ -33,6 +35,7 @@ void AEventTriggerBase::Tick(float DeltaTime)
 void AEventTriggerBase::NotifyActorBeginOverlap(AActor* OtherActor)
 {
 	Super::NotifyActorBeginOverlap(OtherActor);
+	UE_LOG(LogTemp, Warning, TEXT("NotifyActorBeginOverlap called"));
 	OnTriggered(OtherActor);
 }
 
@@ -64,23 +67,12 @@ bool AEventTriggerBase::TargetIsOnLineOfSight(AActor* InTarget)
 	return false;
 }
 
-void AEventTriggerBase::OnEventFinished()
-{
-	Chunk->OpenExits();
-}
-
-void
-AEventTriggerBase::OnEventStarted()
-{
-	Chunk->CloseExits();
-}
-
 void AEventTriggerBase::SetIsTriggered(bool bTriggered)
 {
 	bIsTriggered = bTriggered;
 }
 
-void AEventTriggerBase::OnTriggered(AActor* TriggeredActor)
+/*void AEventTriggerBase::OnTriggered(AActor* TriggeredActor)
 {
 	UE_LOG(LogTemp, Warning, TEXT("OnTriggered called"));
 	
@@ -97,8 +89,9 @@ void AEventTriggerBase::OnTriggered(AActor* TriggeredActor)
 			{
 				UE_LOG(LogTemp, Warning, TEXT("Table is valid. Binding functiong and starting event"));
 				OnEventProcessedDelegate.BindDynamic(this, &AEventTriggerBase::OnEventProcessed);
-				Table->StartEvent(EventInfo, OnEventProcessedDelegate);
+				Table->StartEvent(EventInfo, OnEventProcessedDelegate);				
 				SetIsTriggered(true);
+				//OnTriggeredBP(TriggeredActor);
 			}
 			else
 			{
@@ -114,28 +107,59 @@ void AEventTriggerBase::OnTriggered(AActor* TriggeredActor)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Cannont trigger event. Target is out of line of sight or already triggered"));
 	}
+}*/
+
+void AEventTriggerBase::OnTriggered_Implementation(AActor* TriggeredActor)
+{
+	UE_LOG(LogTemp, Warning, TEXT("OnTriggered_Implementation called"));
+	if(TargetIsOnLineOfSight(TriggeredActor) && !bIsTriggered)
+	{
+		if (PlayerPawn == TriggeredActor)
+		{
+			PlayerPawn->ToggleCanMove(false);
+
+			UE_LOG(LogTemp, Warning, TEXT("Can Trigger Event. Searching for Table"));
+			TArray<AActor*> FoundActors;
+			UGameplayStatics::GetAllActorsOfClass(this, ATableBase::StaticClass(), FoundActors);
+			if(FoundActors.Num() > 0)
+			{
+				UE_LOG(LogTemp, Warning, TEXT("FoundActors.Num() > 0"));
+				ATableBase* Table = Cast<ATableBase>(FoundActors[0]);
+				if(Table)
+				{
+					UE_LOG(LogTemp, Warning, TEXT("Table is valid. Binding functiong and starting event"));
+					OnEventProcessedDelegate.BindDynamic(this, &AEventTriggerBase::OnEventProcessed);
+					Table->StartEvent(EventInfo, OnEventProcessedDelegate);				
+					SetIsTriggered(true);
+					//OnTriggeredBP(TriggeredActor);
+				}
+				else
+				{
+					UE_LOG(LogTemp, Warning, TEXT("Table is not valid"));
+				}
+			}
+			else
+			{
+				UE_LOG(LogTemp, Warning, TEXT("FoundActors.Num() <= 0"));
+			}
+		}		
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Cannont trigger event. Target is out of line of sight or already triggered"));
+	}
 }
 
-
-void AEventTriggerBase::OnEventProcessed(int32 DeterminedValue, APlayerPawn*& InPlayerPawn)
+void AEventTriggerBase::OnEventProcessed(int32 DeterminedValue)
 {
-	UE_LOG(LogTemp, Warning, TEXT("OnEventProcceedTwo called"));
+	UE_LOG(LogTemp, Warning, TEXT("AEventTriggerBase::OnEventProcessed called"));
 	UE_LOG(LogTemp, Warning, TEXT("DeterminedValue: %d called"), DeterminedValue);
-	OnEventProcessedDelegate.Clear();
-
-	if(!InPlayerPawn)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("InPlayerPawn is not valid"));
-		FinishEvent();
-		return;		
-	}
-
-	PlayerPawn = InPlayerPawn;
+	/*OnEventProcessedDelegate.Clear();
 	
 	if (EventInfo.SuccessNumbers.Num() <= 0)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("EventInfo.SuccessNumbers.Num() <= 0"));
-		FinishEvent();
+		UE_LOG(LogTemp, Error, TEXT("EventInfo.SuccessNumbers.Num() <= 0"));
+		FinishEvent(false);
 		return;
 	}
 
@@ -146,22 +170,22 @@ void AEventTriggerBase::OnEventProcessed(int32 DeterminedValue, APlayerPawn*& In
 	//FCondition Condition = FCondition();
 	int32 LocalDifference = 0;
 	
-	UE_LOG(LogTemp, Warning, TEXT("EventInfo.SuccessNumbers.Num() > 0"));
+	//UE_LOG(LogTemp, Warning, TEXT("EventInfo.SuccessNumbers.Num() > 0"));
 	if (EventInfo.bAttributeBased)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("EventInfo.bAttributeBased"));
+		//UE_LOG(LogTemp, Warning, TEXT("EventInfo.bAttributeBased"));
 		int32 BonusValue = 0;
 		if (AttributeValue >= EventInfo.AttributeThreshold)
 		{
 			BonusValue = EventInfo.BonusValue;
-			UE_LOG(LogTemp, Warning, TEXT("AttributeValue(%d) >= EventInfo.AttributeThreshold(%d). BonusValue: %d"), AttributeValue, EventInfo.AttributeThreshold, BonusValue);
+			//UE_LOG(LogTemp, Warning, TEXT("AttributeValue(%d) >= EventInfo.AttributeThreshold(%d). BonusValue: %d"), AttributeValue, EventInfo.AttributeThreshold, BonusValue);
 		}
 
 		int32 TotalValue = 0;		
-		UE_LOG(LogTemp, Warning, TEXT("LocalDifference: %d"), LocalDifference);
+		//UE_LOG(LogTemp, Warning, TEXT("LocalDifference: %d"), LocalDifference);
 		if (EventInfo.bReversed)
 		{
-			UE_LOG(LogTemp, Warning, TEXT("EventInfo.bReversed"));
+			//UE_LOG(LogTemp, Warning, TEXT("EventInfo.bReversed"));
 			TotalValue = FMath::Clamp(DeterminedValue - BonusValue, 1, 6);
 			bEventResult = TotalValue <= EventInfo.SuccessNumbers[0];
 		}
@@ -177,12 +201,12 @@ void AEventTriggerBase::OnEventProcessed(int32 DeterminedValue, APlayerPawn*& In
 	{
 		if (EventInfo.SuccessNumbers.Num() == 1)
 		{
-			UE_LOG(LogTemp, Warning, TEXT("EventInfo.SuccessNumbers.Num() == 1. Value: %d"), EventInfo.SuccessNumbers[0]);
+			//UE_LOG(LogTemp, Warning, TEXT("EventInfo.SuccessNumbers.Num() == 1. Value: %d"), EventInfo.SuccessNumbers[0]);
 			LocalDifference = FMath::Abs(EventInfo.SuccessNumbers[0] - DeterminedValue);
-			UE_LOG(LogTemp, Warning, TEXT("LocalDifference: %d"), LocalDifference);
+			//UE_LOG(LogTemp, Warning, TEXT("LocalDifference: %d"), LocalDifference);
 			if (EventInfo.bHardCondition)
 			{
-				UE_LOG(LogTemp, Warning, TEXT("EventInfo.bHardCondition"));
+				//UE_LOG(LogTemp, Warning, TEXT("EventInfo.bHardCondition"));
 				bEventResult = DeterminedValue == EventInfo.SuccessNumbers[0];
 				//Condition = bEventResult ? EventInfo.SuccessConditions[0] : EventInfo.FailureConditions[FMath::Clamp(LocalDifference - 1, 0, 5)];
 			}
@@ -201,15 +225,18 @@ void AEventTriggerBase::OnEventProcessed(int32 DeterminedValue, APlayerPawn*& In
 		}
 		else
 		{
-			UE_LOG(LogTemp, Warning, TEXT("EventInfo.SuccessNumbers:"));
+			/*UE_LOG(LogTemp, Warning, TEXT("EventInfo.SuccessNumbers:"));
 			for(auto Number : EventInfo.SuccessNumbers)
 			{
 				UE_LOG(LogTemp, Warning, TEXT("%d"), Number);
-			}
-			bEventResult = EventInfo.SuccessNumbers.Contains(DeterminedValue);
+			}*/
+			
+			/*bEventResult = EventInfo.SuccessNumbers.Contains(DeterminedValue);
 			//Condition = bEventResult ? EventInfo.SuccessConditions[0] : EventInfo.FailureConditions[0];
 		}
-	}
+	}*/
+
+	OnEventProcessedBP(bEventResult, DeterminedValue);
 	// we have to do it in BP
 	/*switch (EventInfo.Event)
 	{
@@ -227,23 +254,16 @@ void AEventTriggerBase::OnEventProcessed(int32 DeterminedValue, APlayerPawn*& In
 		//FinishEvent(bEventResult);
 		break;
 	}*/
-	OnEventProcessedBP(bEventResult, LocalDifference);
 }
 
-void AEventTriggerBase::FinishEvent()
+
+void AEventTriggerBase::FinishEvent_Implementation(bool Succeed)
 {
-	/*switch (EventInfo.Event)
-	{
-	case EEvent::Fight:
-		// Do stuff like open doors 
-		Chunk->OpenExits();
-		break;
-	case EEvent::Trap:
-		// Do stuff
-		break;;
-	case EEvent::Chest:
-		// Do stuff
-		break;
-	}*/
-	OnEventFinishedBP();
+	UE_LOG(LogTemp, Warning, TEXT("FinishEvent_Implementation called"))
+}
+
+void AEventTriggerBase::Disappear_Implementation()
+{
+	UE_LOG(LogTemp, Warning, TEXT("Disappear_Implementation called"))
+	Destroy();
 }

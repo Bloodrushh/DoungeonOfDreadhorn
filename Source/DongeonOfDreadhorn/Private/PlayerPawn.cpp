@@ -31,12 +31,6 @@ void APlayerPawn::BeginPlay()
 {
 	Super::BeginPlay();
 	
-	ADODPlayerController* DODPlayerController = Cast<ADODPlayerController>(UGameplayStatics::GetPlayerController(this, 0));
-	if (DODPlayerController)
-	{
-		DODPlayerController->SetPlayerPawnReference(this);
-	}
-
 	UHeadMountedDisplayFunctionLibrary::SetTrackingOrigin(EHMDTrackingOrigin::Floor);
 
 	if (HandClass)
@@ -54,6 +48,11 @@ void APlayerPawn::BeginPlay()
 		UGameplayStatics::FinishSpawningActor(LeftHand, SpawnTransform);
 		LeftHand->AttachToComponent(VrOrigin, AttachmentRuesl);
 	}
+}
+
+void APlayerPawn::Die_Implementation()
+{
+	
 }
 
 // Called every frame
@@ -86,7 +85,7 @@ void APlayerPawn::SetupPlayerInputComponent(UInputComponent* PlayerInputComponen
 
 void APlayerPawn::MoveForward()
 {
-	if (!bPendingStep && !bPendingTurn)
+	if (!bPendingStep && !bPendingTurn && bCanMove)
 	{
 		DesiredLocation = GetActorLocation() + (GetActorForwardVector() * StepDistance);
 		if (CanMoveTo(DesiredLocation))
@@ -99,7 +98,7 @@ void APlayerPawn::MoveForward()
 
 void APlayerPawn::MoveRight()
 {
-	if (!bPendingStep && !bPendingTurn)
+	if (!bPendingStep && !bPendingTurn && bCanMove)
 	{
 		DesiredLocation = GetActorLocation() + (GetActorRightVector() * StepDistance);
 		if (CanMoveTo(DesiredLocation))
@@ -112,7 +111,7 @@ void APlayerPawn::MoveRight()
 
 void APlayerPawn::MoveLeft()
 {
-	if (!bPendingStep && !bPendingTurn)
+	if (!bPendingStep && !bPendingTurn && bCanMove)
 	{
 		DesiredLocation = GetActorLocation() + ((GetActorRightVector() * -1) * StepDistance);
 		if (CanMoveTo(DesiredLocation))
@@ -234,12 +233,21 @@ void APlayerPawn::SpawnFootPrint()
 
 void APlayerPawn::DisableControllers()
 {
+	if (!RightHand || !LeftHand)
+	{
+		return;
+	}
+	
 	RightHand->MotionController->Deactivate();
 	LeftHand->MotionController->Deactivate();
 }
 
 void APlayerPawn::EnableControllers()
 {
+	if (!RightHand || !LeftHand)
+	{
+		return;
+	}
 	RightHand->MotionController->Activate();
 	LeftHand->MotionController->Activate();
 }
@@ -341,9 +349,70 @@ void APlayerPawn::ChangeAttributeValue(EEffect Effect, EAttribute Attribute, int
 void APlayerPawn::TakeDamage(int32 Amount, EAttack Attack)
 {
 	OnDamageTakenBP(Amount, Attack);
+	
+	// decrement current character health	
+	auto HealthAttribute = *Characters[ActiveCharacterIndex].AttributesInfo.Attributes.Find(EAttribute::Health);
+	HealthAttribute -= Amount;
+
+	if (HealthAttribute <= 0)
+	{
+		Die();
+	}	
 }
 
 bool APlayerPawn::CanTakeDamage()
 {
-	return false;
+	return true;
+}
+
+int32 APlayerPawn::GetInitiative()
+{	
+	int32 OutInitiative = 0;
+	for (auto Character : Characters)
+	{
+		OutInitiative += *Character.AttributesInfo.Attributes.Find(EAttribute::Initiative);
+		UE_LOG(LogTemp, Warning, TEXT("Initiative: %d"), OutInitiative);
+	}
+
+	UE_LOG(LogTemp, Warning, TEXT("APlayerPawn::GetInitiative: %d"), OutInitiative);
+	return OutInitiative;
+}
+
+void APlayerPawn::PerformMove()
+{
+	UE_LOG(LogTemp, Warning, TEXT("APlayerPawn::PerformMove called"));
+}
+
+void APlayerPawn::OnMovePerformed()
+{
+	
+}
+
+void APlayerPawn::PossessedBy(AController* NewController)
+{
+	Super::PossessedBy(NewController);
+	EnableControllers();
+}
+
+void APlayerPawn::UnPossessed()
+{
+	Super::UnPossessed();
+	DisableControllers();
+}
+
+void APlayerPawn::TeleportIntoFight(FVector Location)
+{
+	CachedDungeonTransform = GetActorTransform();
+	TeleportTo(Location, FRotator(0,0,0));
+}
+
+void APlayerPawn::TeleportIntoDungeon()
+{
+	TeleportTo(CachedDungeonTransform.GetLocation(), CachedDungeonTransform.GetRotation().Rotator());
+	ToggleCanMove(true);
+}
+
+void APlayerPawn::ToggleCanMove(bool bCan)
+{
+	bCanMove = bCan;
 }

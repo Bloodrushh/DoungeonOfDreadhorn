@@ -13,8 +13,4 @@ UCLASS()
 class DONGEONOFDREADHORN_API AEventTriggerTrap : public AEventTriggerBase
 {
 	GENERATED_BODY()
-
-public:
-	virtual void OnEventProcessed(int32 DeterminedValue, APlayerPawn*& InPlayerPawn) override;
-	
 };
